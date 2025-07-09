@@ -28,7 +28,12 @@ final class GenericResource extends JsonResource
         $output = [];
 
         // Pega os campos do modelo ou o que foi configurado com withOnlyFields
-        $selfFields    = $this->onlyFields['__self'] ?? $parsed['__self'] ?? array_keys($model->getAttributes());
+        $selfFields = $this->onlyFields['__self'] ?? $parsed['__self'] ?? array_keys($model->getAttributes());
+
+        if ($model->actions ?? null) {
+            $selfFields[] = 'actions';
+        }
+
         $groupedFields = $this->groupNestedFields($selfFields);
 
         foreach ($groupedFields as $field => $nestedFields) {
@@ -179,6 +184,7 @@ final class GenericResource extends JsonResource
         $result = [];
 
         foreach ($fields as $field) {
+
             if (!is_string($field)) {
                 // Se for array, podemos querer mesclar recursivamente, ou ignorar.
                 // Aqui vamos ignorar para evitar erro.
