@@ -27,7 +27,6 @@ final class GenericResource extends JsonResource
 
         $output = [];
 
-        // Pega os campos do modelo ou o que foi configurado com withOnlyFields
         $selfFields = $this->onlyFields['__self'] ?? $parsed['__self'] ?? array_keys($model->getAttributes());
 
         $groupedFields = $this->groupNestedFields($selfFields);
