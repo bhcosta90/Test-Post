@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/user', fn (Request $request) => $request->user())->middleware('auth:sanctum');
 
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->group(function (): void {
     Route::apiResource('/posts', PostController::class);
     Route::apiResource('/comments', CommentController::class);
 });

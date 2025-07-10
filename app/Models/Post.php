@@ -33,6 +33,6 @@ final class Post extends Model
 
     public function canUpdate(): Attribute
     {
-        return Attribute::get(fn () => false);
+        return Attribute::get(fn (): false => false);
     }
 }

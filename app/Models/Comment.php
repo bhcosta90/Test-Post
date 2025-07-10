@@ -27,6 +27,6 @@ final class Comment extends Model
 
     public function canUpdate(): Attribute
     {
-        return Attribute::get(fn () => false);
+        return Attribute::get(fn (): false => false);
     }
 }
