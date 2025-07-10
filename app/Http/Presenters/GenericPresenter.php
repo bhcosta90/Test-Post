@@ -1,0 +1,192 @@
+<?php
+
+declare(strict_types = 1);
+
+namespace App\Http\Presenters;
+
+use Illuminate\Support\Str;
+
+final class GenericPresenter
+{
+    public function transform(object $model, array $options = []): array
+    {
+        $fields     = $this->parseFields($options['fields'] ?? '');
+        $includes   = explode(',', $options['include'] ?? '');
+        $pagination = $this->extractPagination($options);
+
+        $output = [];
+
+        $selfFields = $fields['__self'] ?? array_keys($model->getAttributes());
+
+        // Adiciona automaticamente os campos que começam com "can"
+        foreach (get_object_vars($model) as $key => $value) {
+            if (Str::startsWith($key, 'can_') && !in_array($key, $selfFields)) {
+                $selfFields[] = $key;
+            }
+        }
+
+        $groupedFields = $this->groupNestedFields($selfFields);
+
+        foreach ($groupedFields as $field => $nested) {
+            $value = data_get($model, $field);
+
+            if (is_array($value) && true !== $nested) {
+                $output[$field] = collect($value)->only($nested)->toArray();
+            } else {
+                $output[$field] = $value;
+            }
+        }
+
+        foreach ($includes as $includePath) {
+            $segments = explode('.', $includePath);
+            $this->handleIncludePath($model, $output, $fields, $pagination, $segments, []);
+        }
+
+        return collect($output)
+            ->partition(fn ($value, $key) => str_starts_with($key, 'can_'))
+            ->pipe(function ($partitions) {
+                [$can, $rest] = $partitions;
+                $metaActions  = $can->all();
+
+                if (empty($metaActions)) {
+                    return $rest->toArray();
+                }
+
+                return $rest
+                    ->put('meta_actions', $metaActions)
+                    ->toArray();
+            });
+    }
+
+    public function extractPagination(array $input): array
+    {
+        $pagination = [];
+
+        foreach ($input as $key => $value) {
+            if (preg_match('/^(page|perPage)([A-Z]\w*)$/', $key, $matches)) {
+                $type     = lcfirst($matches[1]);
+                $relation = lcfirst($matches[2]);
+
+                if (!isset($pagination[$relation])) {
+                    $pagination[$relation] = [];
+                }
+
+                $pagination[$relation][$type] = (int) $value;
+            }
+        }
+
+        return $pagination;
+    }
+
+    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar)
+    {
+        $relation = array_shift($segments);
+        $camelRel = Str::camel($relation);
+        $fullPath = implode('.', [...$pathSoFar, $relation]);
+
+        if (!method_exists($model, $camelRel)) {
+            return;
+        }
+
+        $relationObject = $model->$camelRel();
+        $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
+
+        $page    = $pagination[$relationKey]['page'] ?? 1;
+        $perPage = $pagination[$relationKey]['perPage'] ?? 5;
+
+        if ($relationObject instanceof \Illuminate\Database\Eloquent\Relations\HasMany) {
+            $paginator = $relationObject->paginate($perPage, ['*'], 'page', $page);
+
+            $data = $paginator->getCollection()->map(function ($item) use ($fields, $fullPath, $pagination) {
+                return $this->transform($item, [
+                    'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
+                    'include'    => '',
+                    'pagination' => $pagination,
+                ]);
+            });
+
+            $output[$relation] = [
+                'data' => $data,
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page'    => $paginator->lastPage(),
+                    'total'        => $paginator->total(),
+                    'per_page'     => $paginator->perPage(),
+                ],
+            ];
+        } elseif ($relationObject instanceof \Illuminate\Database\Eloquent\Relations\BelongsTo) {
+            $related = $model->$camelRel;
+
+            if (!$related) {
+                return;
+            }
+
+            $output[$relation] = $this->transform($related, [
+                'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
+                'include'    => '',
+                'pagination' => $pagination,
+            ]);
+        }
+
+        if (!empty($segments)) {
+            if (isset($output[$relation]['data'])) {
+                $output[$relation]['data'] = collect($output[$relation]['data'])->map(function ($item) use ($segments, $fields, $pagination, $pathSoFar, $relation) {
+                    $this->handleIncludePath((object) $item, $item, $fields, $pagination, $segments, [...$pathSoFar, $relation]);
+
+                    return $item;
+                });
+            } else {
+                $this->handleIncludePath((object) $output[$relation], $output[$relation], $fields, $pagination, $segments, [...$pathSoFar, $relation]);
+            }
+        }
+    }
+
+    private function parseFields(string $raw): array
+    {
+        $result = [];
+
+        foreach (explode(',', $raw) as $field) {
+            if (!$field = mb_trim($field)) {
+                continue;
+            }
+
+            if (str_contains($field, '.')) {
+                [$relationPath, $nested] = explode('.', $field, 2);
+                $result[$relationPath][] = $nested;
+            } else {
+                $result['__self'][] = $field;
+            }
+        }
+
+        return $result;
+    }
+
+    private function groupNestedFields(array $fields): array
+    {
+        $result = [];
+
+        foreach ($fields as $field) {
+            if (str_contains($field, '.')) {
+                [$parent, $child]  = explode('.', $field, 2);
+                $result[$parent][] = $child;
+            } else {
+                $result[$field] = true;
+            }
+        }
+
+        return $result;
+    }
+
+    private function transformArrayToString(array | string | null $fields): string
+    {
+        if (blank($fields)) {
+            return '';
+        }
+
+        if (is_array($fields)) {
+            return implode(',', array_map('trim', $fields));
+        }
+
+        return $fields;
+    }
+}
