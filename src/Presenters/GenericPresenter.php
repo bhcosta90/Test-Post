@@ -6,6 +6,7 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
 use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
@@ -16,10 +17,10 @@ final class GenericPresenter
     {
     }
 
-    public function transform(object $model, array $options = []): array
+    public function transform(Model $model, array $options = []): array
     {
         $fields     = $this->parseFields($options['fields'] ?? '');
-        $includes   = $this->getIncludes($options['fields'] ?? '');
+        $includes   = $this->getIncludes($model, $options['fields'] ?? '');
         $pagination = $this->extractPagination($options);
 
         $output = [];
@@ -94,7 +95,7 @@ final class GenericPresenter
         return $pagination;
     }
 
-    public function getIncludes(string $fields): array
+    public function getIncludes(Model $model, string $fields): array
     {
         $relationsFromFields = [];
 
@@ -120,6 +121,73 @@ final class GenericPresenter
         }
 
         return array_unique($relationsFromFields);
+    }
+
+    public function extractIncludesWithPagination(string $fields, Model $model): array
+    {
+        $relationsFromFields = [];
+        $includes            = [];
+
+        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
+
+        foreach ($fieldsArray as $field) {
+            if (str_contains($field, 'actions.')) {
+                continue;
+            }
+
+            if (Str::contains($field, '.')) {
+                $parts = explode('.', $field);
+                $path  = '';
+
+                foreach ($parts as $index => $part) {
+                    $path = '' === $path ? $part : $path . '.' . $part;
+
+                    if ($index < count($parts) - 1) {
+                        $relationsFromFields[] = $path;
+                    }
+                }
+            }
+        }
+
+        foreach (array_unique($relationsFromFields) as $relationPath) {
+            $relationSegments = explode('.', $relationPath);
+            $currentModel     = $model;
+            $isHasMany        = true;
+
+            foreach ($relationSegments as $segment) {
+                $camelMethod = Str::camel($segment);
+
+                if (!method_exists($currentModel, $camelMethod)) {
+                    $isHasMany = false;
+
+                    break;
+                }
+
+                $relation = $currentModel->$camelMethod();
+
+                if (!($relation instanceof Relations\Relation)) {
+                    $isHasMany = false;
+
+                    break;
+                }
+
+                if ($relation instanceof Relations\HasMany) {
+                    // continua verificando
+                } else {
+                    $isHasMany = false;
+                }
+
+                $currentModel = $relation->getRelated();
+            }
+
+            if ($isHasMany) {
+                // Remove include tradicional e substitui por função
+                $root            = explode('.', $relationPath)[0];
+                $includes[$root] = fn ($query) => $query->paginate(5); // customize aqui
+            }
+        }
+
+        return $includes;
     }
 
     private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar): ?array

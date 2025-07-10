@@ -75,7 +75,9 @@ trait AsApiController
 
         $genericPresenter = app(GenericPresenter::class);
 
-        if (!empty($allIncludes = $genericPresenter->getIncludes($request->input('fields', '')))) {
+        $allIncludes = $genericPresenter->getIncludes($this->model(), $request->input('fields', ''));
+
+        if (filled($allIncludes)) {
             $query = $query->with($allIncludes);
         }
 
