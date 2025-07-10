@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace App\Http\Presenters;
+namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use Illuminate\Support\Str;
 

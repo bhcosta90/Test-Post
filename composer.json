@@ -30,7 +30,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "QuantumTecnology\\ControllerQraphQLExtension\\": "app/",
+            "QuantumTecnology\\ControllerQraphQLExtension\\": "src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
