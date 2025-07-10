@@ -96,7 +96,7 @@ final class GenericPresenter
         return $pagination;
     }
 
-    public function getIncludes(Model $model, string $fields, array $paginations = []): array
+    public function getIncludes(Model $model, string $fields, array $pagination): array
     {
         $relationsFromFields = [];
 
@@ -146,21 +146,14 @@ final class GenericPresenter
 
                 if ($relation instanceof Relations\HasMany) {
                     // include com limit
+                    $limit = $this->paginateSupport
+                        ->calculatePerPage((string) ($pagination[$currentPath]['per_page'] ?? ''), $currentPath);
+
                     if (!isset($processedPaths[$currentPath])) {
-                        $changeUnderlineToPoint = str_replace('_', '.', $currentPath);
-
-                        $limit = $this->paginateSupport
-                            ->calculatePerPage((string) ($paginations[$changeUnderlineToPoint]['per_page'] ?? ''), $currentPath);
-
-                        dump([
-                            $paginations, $changeUnderlineToPoint, $limit,
-                        ]);
-
-                        $includes[$currentPath] = fn ($query) => $query
-                            ->limit($limit);
-
+                        $includes[$currentPath]       = fn ($query) => $query->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
+
                 } else {
                     // outras relações apenas adicionam o include simples
                     if (!in_array($currentPath, $includes, true) && !isset($processedPaths[$currentPath])) {

@@ -75,14 +75,14 @@ trait AsApiController
 
         $genericPresenter = app(GenericPresenter::class);
 
-        $allIncludes = $genericPresenter->getIncludes($this->model(), $request->input('fields', ''));
-        $allCount    = $genericPresenter->getWithCount($this->model(), $allIncludes);
+        $fields     = $request->input('fields', '');
+        $pagination = $genericPresenter->extractPagination($request->all());
 
-        if (filled($allIncludes)) {
+        if (filled($allIncludes = $genericPresenter->getIncludes($this->model(), $fields, $pagination))) {
             $query = $query->with($allIncludes);
         }
 
-        if (filled($allCount)) {
+        if (filled($allCount = $genericPresenter->getWithCount($this->model(), $allIncludes))) {
             $query = $query->withCount($allCount);
         }
 
