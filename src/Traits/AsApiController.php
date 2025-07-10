@@ -4,7 +4,6 @@ declare(strict_types = 1);
 
 namespace QuantumTecnology\ControllerQraphQLExtension\Traits;
 
-use App\Http\Requests\CommentRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -30,8 +29,10 @@ trait AsApiController
         return GenericResource::collection($models);
     }
 
-    final public function store(CommentRequest $request): GenericResource
+    final public function store(): GenericResource
     {
+        $request = app($this->getNamespaceRequest('update'));
+
         return new GenericResource($this->model()->create($request->validated()));
     }
 
@@ -40,9 +41,10 @@ trait AsApiController
         return new GenericResource($this->findByOne($request));
     }
 
-    final public function update(CommentRequest $request): GenericResource
+    final public function update(): GenericResource
     {
-        $model = $this->findByOne($request);
+        $request = app($this->getNamespaceRequest('store'));
+        $model   = $this->findByOne($request);
 
         return new GenericResource(tap($model)->update($request->validated()));
     }
@@ -78,5 +80,24 @@ trait AsApiController
         ]);
 
         return $query;
+    }
+
+    protected function getNamespaceRequest(?string $action = null): string
+    {
+        $value = str_replace(['Controller', 'App\\Http\\Controllers\\'],
+            ['Request', 'App\\Http\\Requests\\'],
+            static::class);
+
+        if (blank($action)) {
+            return $value;
+        }
+
+        $value = mb_substr($value, 0, -7) . '\\' . ucfirst($action) . 'Request';
+
+        if (class_exists($value)) {
+            return $value;
+        }
+
+        return self::getNamespaceRequest();
     }
 }
