@@ -6,9 +6,14 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
+use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
 
 final class GenericPresenter
 {
+    public function __construct(protected PaginateSupport $paginateSupport)
+    {
+    }
+
     public function transform(object $model, array $options = []): array
     {
         $fields     = $this->parseFields($options['fields'] ?? '');
@@ -122,7 +127,7 @@ final class GenericPresenter
         $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
 
         $page    = $pagination[$relationKey]['page'] ?? 1;
-        $perPage = $pagination[$relationKey]['perPage'] ?? 5;
+        $perPage = $this->paginateSupport->calculatePerPage((string) $pagination[$relationKey]['perPage']);
 
         if ($relationObject instanceof Relations\HasMany) {
             $paginator = $relationObject->simplePaginate($perPage, ['*'], 'page', $page);

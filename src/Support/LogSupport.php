@@ -11,12 +11,17 @@ final class LogSupport
     public static function add($message): void
     {
         if (app()->isLocal()) {
-            self::$messages[] = $message;
+            $stackTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
+
+            self::$messages[$message . $stackTrace[1]['line']] = [
+                'message'     => $message,
+                'stack_trace' => $stackTrace,
+            ];
         }
     }
 
     public static function getMessages(): array
     {
-        return self::$messages;
+        return array_values(self::$messages);
     }
 }
