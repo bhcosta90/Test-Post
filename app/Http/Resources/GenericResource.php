@@ -12,35 +12,24 @@ final class GenericResource extends JsonResource
 {
     protected array $onlyFields = [];
 
-    public function withOnlyFields(array $fields): self
-    {
-        $this->onlyFields = ['__self' => $fields];
-
-        return $this;
-    }
-
-    public function toArray($request)
+    public function toArray($request): array
     {
         $model    = $this->resource;
         $parsed   = $this->parseFields($request->input('fields', ''));
         $includes = explode(',', $request->input('include', ''));
 
-        // Campos explicitamente solicitados
         $requestedFields = $this->onlyFields['__self'] ?? $parsed['__self'] ?? [];
 
-        $accessors = [];
+        $metaActions = [];
 
         foreach (get_class_methods($model) as $method) {
             if (str_starts_with($method, 'can_')) {
-                // extrai o nome do campo (ex: getCanDeleteAttribute -> can_delete)
-                $fieldName   = Str::snake($method);
-                $accessors[] = $fieldName;
+                $fieldName     = Str::snake($method);
+                $metaActions[] = $fieldName;
             }
         }
 
-        $selfFields = array_unique(array_merge($requestedFields, $accessors));
-
-        // Resto do seu código para agrupar campos e montar output...
+        $selfFields = array_unique(array_merge($requestedFields, $metaActions));
 
         $groupedFields = $this->groupNestedFields($selfFields);
 
@@ -48,8 +37,7 @@ final class GenericResource extends JsonResource
 
         foreach ($groupedFields as $field => $nestedFields) {
             if (str_contains($field, '.')) {
-                $rootKey = explode('.', $field)[0];
-                $subKey  = explode('.', $field)[1];
+                [$rootKey, $subKey] = explode('.', $field);
 
                 $value = data_get($model, $field);
 
@@ -80,17 +68,37 @@ final class GenericResource extends JsonResource
             $this->handleIncludePath($model, $output, $parsed, $segments, []);
         }
 
-        return $output;
+        return collect($output)
+            ->partition(fn ($value, $key) => str_starts_with($key, 'can_'))
+            ->pipe(function ($partitions) {
+                [$can, $rest] = $partitions;
+                $metaActions  = $can->all();
+
+                if (empty($metaActions)) {
+                    return $rest->toArray();
+                }
+
+                return $rest
+                    ->put('meta_actions', $metaActions)
+                    ->toArray();
+            });
     }
 
-    protected function handleIncludePath($model, &$output, $parsed, $segments, $pathSoFar)
+    protected function withOnlyFields(array $fields): self
+    {
+        $this->onlyFields = ['__self' => $fields];
+
+        return $this;
+    }
+
+    protected function handleIncludePath($model, &$output, $parsed, $segments, $pathSoFar): ?array
     {
         $relation = array_shift($segments);
         $fullPath = implode('.', [...$pathSoFar, $relation]);
         $camelRel = Str::camel($relation);
 
         if (!method_exists($model, $camelRel)) {
-            return;
+            return null;
         }
 
         $relationObject = $model->$camelRel();
@@ -168,6 +176,8 @@ final class GenericResource extends JsonResource
                 $this->handleIncludePath((object) $output[$relation], $output[$relation], $parsed, $segments, [...$pathSoFar, $relation]);
             }
         }
+
+        return null;
     }
 
     protected function parseFields(string $raw): array

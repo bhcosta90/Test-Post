@@ -20,8 +20,13 @@ final class Comment extends Model
         return $this->belongsTo(Post::class);
     }
 
-    public function canDelete(): Attribute
+    public function getCanDeleteAttribute(): bool
     {
-        return Attribute::get(fn () => true);
+        return true;
+    }
+
+    public function canUpdate(): Attribute
+    {
+        return Attribute::get(fn () => false);
     }
 }
