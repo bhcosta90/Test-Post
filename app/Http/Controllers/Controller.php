@@ -4,9 +4,8 @@ declare(strict_types = 1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\PostRequest;
+use App\Http\Requests\CommentRequest;
 use App\Http\Resources\GenericResource;
-use App\Models\Post;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -25,14 +24,14 @@ abstract class Controller
         $page    = $request->input('page', 1);
         $perPage = $request->input('perPage', 1);
 
-        $posts = $query->paginate($perPage, ['*'], 'page', $page);
+        $models = $query->paginate($perPage, ['*'], 'page', $page);
 
-        return GenericResource::collection($posts);
+        return GenericResource::collection($models);
     }
 
-    final public function store(PostRequest $request): GenericResource
+    final public function store(CommentRequest $request): GenericResource
     {
-        return new GenericResource(Post::create($request->validated()));
+        return new GenericResource($this->model()->create($request->validated()));
     }
 
     final public function show(Request $request): GenericResource
@@ -40,9 +39,11 @@ abstract class Controller
         return new GenericResource($this->findByOne($request));
     }
 
-    final public function update(PostRequest $request, Post $post): GenericResource
+    final public function update(CommentRequest $request): GenericResource
     {
-        return new GenericResource(tap($post)->update($request->validated()));
+        $model = $this->findByOne($request);
+
+        return new GenericResource(tap($model)->update($request->validated()));
     }
 
     final public function destroy(Request $request): JsonResponse
