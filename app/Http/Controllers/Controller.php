@@ -4,20 +4,20 @@ declare(strict_types = 1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Presenters\GenericPresenter;
 use App\Http\Requests\CommentRequest;
 use App\Http\Resources\GenericResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Str;
 
 abstract class Controller
 {
     abstract protected function model(): Model;
 
-    final public function index(Request $request, GenericPresenter $genericPresenter): JsonResponse
+    final public function index(Request $request): AnonymousResourceCollection
     {
         $query = $this->queryModel($request);
 
@@ -26,22 +26,7 @@ abstract class Controller
 
         $models = $query->paginate($perPage, ['*'], 'page', $page);
 
-        // return GenericResource::collection($models);
-        return response()->json([
-            'data' => $models->getCollection()->map(fn ($post) => $genericPresenter->transform($post, $request->all())),
-            'meta' => [
-                'current_page' => $models->currentPage(),
-                'last_page'    => $models->lastPage(),
-                'total'        => $models->total(),
-                'per_page'     => $models->perPage(),
-            ],
-            'links' => [
-                'first' => $models->url(1),
-                'last'  => $models->url($models->lastPage()),
-                'prev'  => $models->previousPageUrl(),
-                'next'  => $models->nextPageUrl(),
-            ],
-        ]);
+        return GenericResource::collection($models);
     }
 
     final public function store(CommentRequest $request): GenericResource

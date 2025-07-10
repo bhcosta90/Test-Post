@@ -11,7 +11,7 @@ final class GenericPresenter
     public function transform(object $model, array $options = []): array
     {
         $fields     = $this->parseFields($options['fields'] ?? '');
-        $includes   = explode(',', $options['include'] ?? '');
+        $includes   = $this->getIncludes($options['fields'] ?? '');
         $pagination = $this->extractPagination($options);
 
         $output = [];
@@ -95,7 +95,7 @@ final class GenericPresenter
         $perPage = $pagination[$relationKey]['perPage'] ?? 5;
 
         if ($relationObject instanceof \Illuminate\Database\Eloquent\Relations\HasMany) {
-            $paginator = $relationObject->paginate($perPage, ['*'], 'page', $page);
+            $paginator = $relationObject->simplePaginate($perPage, ['*'], 'page', $page);
 
             $data = $paginator->getCollection()->map(function ($item) use ($fields, $fullPath, $pagination) {
                 return $this->transform($item, [
@@ -108,10 +108,9 @@ final class GenericPresenter
             $output[$relation] = [
                 'data' => $data,
                 'meta' => [
-                    'current_page' => $paginator->currentPage(),
-                    'last_page'    => $paginator->lastPage(),
-                    'total'        => $paginator->total(),
-                    'per_page'     => $paginator->perPage(),
+                    'per_page'      => $paginator->perPage(),
+                    'current_page'  => $paginator->currentPage(),
+                    'has_more_page' => $paginator->hasMorePages(),
                 ],
             ];
         } elseif ($relationObject instanceof \Illuminate\Database\Eloquent\Relations\BelongsTo) {
@@ -188,5 +187,34 @@ final class GenericPresenter
         }
 
         return $fields;
+    }
+
+    private function getIncludes(string $fields): array
+    {
+        $relationsFromFields = [];
+
+        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
+
+        foreach ($fieldsArray as $field) {
+            if (str_contains($field, 'actions.')) {
+                continue;
+            }
+
+            if (Str::contains($field, '.')) {
+                $parts = explode('.', $field);
+                $path  = '';
+
+                foreach ($parts as $index => $part) {
+                    $path = '' === $path ? $part : $path . '.' . $part;
+
+                    // ignora o último que é o campo, pega só as relações
+                    if ($index < count($parts) - 1) {
+                        $relationsFromFields[] = $path;
+                    }
+                }
+            }
+        }
+
+        return $relationsFromFields;
     }
 }
