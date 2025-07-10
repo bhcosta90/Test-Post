@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace App\Http\Requests\Api\V1;
 
 use App\Models\Enum\PostStatusEnum;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,7 @@ final class PostRequest extends FormRequest
             'user_id' => [
                 'sometimes',
                 Rule::requiredIf((bool) $this->route('post')),
-                'exists:users,id',
+                'exists:' . User::class . ',id',
             ],
             'status' => [
                 'sometimes',
