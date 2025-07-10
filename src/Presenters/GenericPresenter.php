@@ -127,7 +127,7 @@ final class GenericPresenter
         $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
 
         $page    = $pagination[$relationKey]['page'] ?? 1;
-        $perPage = $this->paginateSupport->calculatePerPage((string) $pagination[$relationKey]['perPage']);
+        $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''));
 
         if ($relationObject instanceof Relations\HasMany) {
             $paginator = $relationObject->simplePaginate($perPage, ['*'], 'page', $page);
