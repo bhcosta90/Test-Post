@@ -139,24 +139,6 @@ final class GenericPresenter
         $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''), $relationKey);
 
         if ($relationObject instanceof Relations\HasMany) {
-            //            $paginator = $relationObject->simplePaginate($perPage, ['*'], 'page', $page);
-            //
-            //            $data = $paginator->getCollection()->map(function ($item) use ($fields, $fullPath, $pagination) {
-            //                return $this->transform($item, [
-            //                    'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
-            //                    'include'    => '',
-            //                    'pagination' => $pagination,
-            //                ]);
-            //            });
-            //
-            //            $output[$relation] = [
-            //                'data' => $data,
-            //                'meta' => [
-            //                    'per_page'      => $paginator->perPage(),
-            //                    'current_page'  => $paginator->currentPage(),
-            //                    'has_more_page' => $paginator->hasMorePages(),
-            //                ],
-            //            ];
             $paginator = $model->$camelRel;
 
             if (!$paginator) {
