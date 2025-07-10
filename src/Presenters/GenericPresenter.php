@@ -25,7 +25,7 @@ final class GenericPresenter
 
         $output = [];
 
-        $selfFields = $fields['__self'] ?? array_keys($model->getAttributes());
+        $selfFields = $fields['__self'] ?? [];
 
         // Adiciona automaticamente os campos que começam com "can"
         foreach (get_object_vars($model) as $key => $value) {
