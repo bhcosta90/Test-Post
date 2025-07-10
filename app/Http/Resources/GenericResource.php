@@ -25,15 +25,29 @@ final class GenericResource extends JsonResource
         $parsed   = $this->parseFields($request->input('fields', ''));
         $includes = explode(',', $request->input('include', ''));
 
-        $output = [];
+        // Campos explicitamente solicitados
+        $requestedFields = $this->onlyFields['__self'] ?? $parsed['__self'] ?? [];
 
-        $selfFields = $this->onlyFields['__self'] ?? $parsed['__self'] ?? array_keys($model->getAttributes());
+        $accessors = [];
+
+        foreach (get_class_methods($model) as $method) {
+            if (str_starts_with($method, 'can_')) {
+                // extrai o nome do campo (ex: getCanDeleteAttribute -> can_delete)
+                $fieldName   = Str::snake($method);
+                $accessors[] = $fieldName;
+            }
+        }
+
+        $selfFields = array_unique(array_merge($requestedFields, $accessors));
+
+        // Resto do seu código para agrupar campos e montar output...
 
         $groupedFields = $this->groupNestedFields($selfFields);
 
+        $output = [];
+
         foreach ($groupedFields as $field => $nestedFields) {
             if (str_contains($field, '.')) {
-                // campo aninhado ex: actions.can_delete
                 $rootKey = explode('.', $field)[0];
                 $subKey  = explode('.', $field)[1];
 
@@ -48,8 +62,11 @@ final class GenericResource extends JsonResource
                 continue;
             }
 
-            // campo simples
-            $value = data_get($model, $field);
+            if ($model->offsetExists($field) || $model->hasGetMutator($field) || method_exists($model, 'get' . Str::studly($field) . 'Attribute')) {
+                $value = $model->$field;
+            } else {
+                $value = null;
+            }
 
             if (is_array($value) && true !== $nestedFields) {
                 $output[$field] = collect($value)->only($nestedFields)->toArray();
@@ -58,7 +75,6 @@ final class GenericResource extends JsonResource
             }
         }
 
-        // Processa as relações com includes e paginação
         foreach ($includes as $includePath) {
             $segments = explode('.', $includePath);
             $this->handleIncludePath($model, $output, $parsed, $segments, []);

@@ -25,11 +25,8 @@ final class Post extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getActionsAttribute(): array
+    public function getCanDeleteAttribute(): bool
     {
-        return [
-            'can_delete' => true,
-            'can_update' => true,
-        ];
+        return true;
     }
 }
