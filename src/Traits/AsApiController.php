@@ -48,7 +48,7 @@ trait AsApiController
         $request = app($this->getNamespaceRequest('update'));
         $model   = $this->findByOne($request);
 
-        abort_unless($request->authorize(), 403, 'This action is unauthorized.');
+        abort_unless($request->authorize($model), 403, 'This action is unauthorized.');
 
         return new GenericResource(tap($model)->update($request->validated()));
     }
