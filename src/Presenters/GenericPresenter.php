@@ -6,7 +6,6 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
-use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
@@ -176,7 +175,40 @@ final class GenericPresenter
 
         foreach ($allIncludes as $key => $value) {
             if ($value instanceof Closure) {
-                $withCount[] = $key;
+                continue;
+            }
+
+            // Pode estar na chave (string) ou valor (string)
+            $relationPath = is_int($key) ? $value : $key;
+
+            $segments     = explode('.', $relationPath);
+            $currentModel = $model;
+            $validPath    = true;
+
+            // Percorre cada segmento da relação aninhada para validar se é HasMany
+            foreach ($segments as $segment) {
+                $method = Str::camel($segment);
+
+                if (!method_exists($currentModel, $method)) {
+                    $validPath = false;
+
+                    break;
+                }
+
+                $relation = $currentModel->$method();
+
+                // Se não for HasMany, invalida (pode mudar aqui se quiser suportar outros tipos)
+                if (!($relation instanceof Relations\HasMany)) {
+                    $validPath = false;
+
+                    break;
+                }
+
+                $currentModel = $relation->getRelated();
+            }
+
+            if ($validPath) {
+                $withCount[] = $relationPath;
             }
         }
 
