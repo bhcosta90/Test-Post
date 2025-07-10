@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Presenters\GenericPresenter;
 use App\Http\Requests\CommentRequest;
 use App\Http\Resources\GenericResource;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Str;
 
 abstract class Controller
 {
@@ -64,47 +64,11 @@ abstract class Controller
 
     protected function queryModel(Request $request): Builder
     {
-        $fields  = $request->input('fields', '');
-        $include = $request->input('include', '');
-
-        $fieldsArray  = array_filter(array_map('trim', explode(',', $fields)));
-        $includeArray = array_filter(array_map('trim', explode(',', $include)));
-
-        // Extract Nesty Relationships from Fields (ex: posts.comments.body -> posts, posts.comments)
-        $relationsFromFields = [];
-
-        foreach ($fieldsArray as $field) {
-            if (str_contains($field, 'actions.')) {
-                continue;
-            }
-
-            if (Str::contains($field, '.')) {
-                $parts = explode('.', $field);
-                $path  = '';
-
-                foreach ($parts as $index => $part) {
-                    $path = '' === $path ? $part : $path . '.' . $part;
-
-                    // ignora o último que é o campo, pega só as relações
-                    if ($index < count($parts) - 1) {
-                        $relationsFromFields[] = $path;
-                    }
-                }
-            }
-        }
-
-        $relationsFromFields = array_unique($relationsFromFields);
-
-        // Une include original com os relacionamentos extraídos de fields, único
-        $allIncludes = array_unique(array_merge($includeArray, $relationsFromFields));
-
-        // Monta o with() para Eloquent
-        // Aqui a ideia é passar os includes simples, como 'comments', 'posts.comments', etc.
-        // O with() do Laravel aceita nested relationships com pontos.
-
         $query = $this->model()->query();
 
-        if (!empty($allIncludes)) {
+        $genericPresenter = app(GenericPresenter::class);
+
+        if (!empty($allIncludes = $genericPresenter->getIncludes($request->input('fields', '')))) {
             $query = $query->with($allIncludes);
         }
 

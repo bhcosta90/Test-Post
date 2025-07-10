@@ -53,7 +53,7 @@ final class GenericPresenter
                 }
 
                 return $rest
-                    ->put('meta_actions', $metaActions)
+                    ->put('actions', $metaActions)
                     ->toArray();
             });
     }
@@ -76,6 +76,35 @@ final class GenericPresenter
         }
 
         return $pagination;
+    }
+
+    public function getIncludes(string $fields): array
+    {
+        $relationsFromFields = [];
+
+        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
+
+        foreach ($fieldsArray as $field) {
+            if (str_contains($field, 'actions.')) {
+                continue;
+            }
+
+            if (Str::contains($field, '.')) {
+                $parts = explode('.', $field);
+                $path  = '';
+
+                foreach ($parts as $index => $part) {
+                    $path = '' === $path ? $part : $path . '.' . $part;
+
+                    // ignora o último que é o campo, pega só as relações
+                    if ($index < count($parts) - 1) {
+                        $relationsFromFields[] = $path;
+                    }
+                }
+            }
+        }
+
+        return $relationsFromFields;
     }
 
     private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar)
@@ -187,34 +216,5 @@ final class GenericPresenter
         }
 
         return $fields;
-    }
-
-    private function getIncludes(string $fields): array
-    {
-        $relationsFromFields = [];
-
-        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
-
-        foreach ($fieldsArray as $field) {
-            if (str_contains($field, 'actions.')) {
-                continue;
-            }
-
-            if (Str::contains($field, '.')) {
-                $parts = explode('.', $field);
-                $path  = '';
-
-                foreach ($parts as $index => $part) {
-                    $path = '' === $path ? $part : $path . '.' . $part;
-
-                    // ignora o último que é o campo, pega só as relações
-                    if ($index < count($parts) - 1) {
-                        $relationsFromFields[] = $path;
-                    }
-                }
-            }
-        }
-
-        return $relationsFromFields;
     }
 }
