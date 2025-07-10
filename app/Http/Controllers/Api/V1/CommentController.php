@@ -5,13 +5,13 @@ declare(strict_types = 1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Post;
+use App\Models\Comment;
 use Illuminate\Database\Eloquent\Model;
 
-final class PostController extends Controller
+final class CommentController extends Controller
 {
     protected function model(): Model
     {
-        return new Post();
+        return new Comment();
     }
 }
