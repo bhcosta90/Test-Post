@@ -43,7 +43,7 @@ trait AsApiController
 
     final public function update(): GenericResource
     {
-        $request = app($this->getNamespaceRequest('store'));
+        $request = app($this->getNamespaceRequest('update'));
         $model   = $this->findByOne($request);
 
         return new GenericResource(tap($model)->update($request->validated()));
