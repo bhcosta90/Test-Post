@@ -86,8 +86,6 @@ trait AsApiController
             $query = $query->withCount($allCount);
         }
 
-        dd($allIncludes, $allCount);
-
         return $query;
     }
 

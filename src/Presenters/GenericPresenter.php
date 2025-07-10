@@ -98,7 +98,6 @@ final class GenericPresenter
     public function getIncludes(Model $model, string $fields): array
     {
         $relationsFromFields = [];
-        $includes            = [];
 
         $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
 
@@ -122,7 +121,6 @@ final class GenericPresenter
         }
 
         $includes       = [];
-        $withCount      = [];
         $processedPaths = [];
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
@@ -151,14 +149,26 @@ final class GenericPresenter
                         $includes[$currentPath]       = fn ($query) => $query->limit(5);
                         $processedPaths[$currentPath] = true;
                     }
-
-                    // registra o withCount para essa relação
-                    $withCount[] = $currentPath;
                 } else {
                     // outras relações apenas adicionam o include simples
                     if (!in_array($currentPath, $includes, true) && !isset($processedPaths[$currentPath])) {
                         $includes[]                   = $currentPath;
                         $processedPaths[$currentPath] = true;
+                    }
+                }
+
+                if ($relation instanceof Relations\BelongsTo) {
+                    $childFields = collect($relationsFromFields)
+                        ->filter(fn ($p) => Str::startsWith($p, $currentPath . '.') && mb_substr_count($p, '.') > mb_substr_count($currentPath, '.'))
+                        ->map(fn ($p) => Str::after($p, $currentPath . '.'))
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    if ($childFields) {
+                        $includes[$currentPath] = fn ($query) => $query->withCount($childFields);
+                    } else {
+                        $includes[] = $currentPath;
                     }
                 }
 
