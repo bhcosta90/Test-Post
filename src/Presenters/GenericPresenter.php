@@ -20,8 +20,8 @@ final class GenericPresenter
     public function transform(Model $model, array $options = []): array
     {
         $fields     = $this->parseFields($options['fields'] ?? '');
-        $includes   = $this->getIncludes($model, $options['fields'] ?? '');
         $pagination = $this->extractPagination($options);
+        $includes   = $this->getIncludes($model, $options['fields'] ?? '', $pagination);
 
         $output = [];
 
@@ -80,22 +80,23 @@ final class GenericPresenter
         $pagination = [];
 
         foreach ($input as $key => $value) {
-            if (preg_match('/^(page|perPage)([A-Z]\w*)$/', $key, $matches)) {
-                $type     = lcfirst($matches[1]);
-                $relation = lcfirst($matches[2]);
+            if (preg_match('/^(per_page|page)_(.+)$/', $key, $matches)) {
+                [$type, $rawPath] = [$matches[1], $matches[2]];
 
-                if (!isset($pagination[$relation])) {
-                    $pagination[$relation] = [];
+                $relationPath = str_replace('_', '.', $rawPath);
+
+                if (!isset($pagination[$relationPath])) {
+                    $pagination[$relationPath] = [];
                 }
 
-                $pagination[$relation][$type] = (int) $value;
+                $pagination[$relationPath][$type] = (int) $value;
             }
         }
 
         return $pagination;
     }
 
-    public function getIncludes(Model $model, string $fields): array
+    public function getIncludes(Model $model, string $fields, array $paginations = []): array
     {
         $relationsFromFields = [];
 
@@ -146,7 +147,18 @@ final class GenericPresenter
                 if ($relation instanceof Relations\HasMany) {
                     // include com limit
                     if (!isset($processedPaths[$currentPath])) {
-                        $includes[$currentPath]       = fn ($query) => $query->limit(5);
+                        $changeUnderlineToPoint = str_replace('_', '.', $currentPath);
+
+                        $limit = $this->paginateSupport
+                            ->calculatePerPage((string) ($paginations[$changeUnderlineToPoint]['per_page'] ?? ''), $currentPath);
+
+                        dump([
+                            $paginations, $changeUnderlineToPoint, $limit,
+                        ]);
+
+                        $includes[$currentPath] = fn ($query) => $query
+                            ->limit($limit);
+
                         $processedPaths[$currentPath] = true;
                     }
                 } else {
