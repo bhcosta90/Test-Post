@@ -133,10 +133,9 @@ final class GenericPresenter
         }
 
         $relationObject = $model->$camelRel();
-        $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
-
-        $page    = $pagination[$relationKey]['page'] ?? 1;
-        $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''), $relationKey);
+        //        $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
+        //        $page    = $pagination[$relationKey]['page'] ?? 1;
+        //        $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''), $relationKey);
 
         if ($relationObject instanceof Relations\HasMany) {
             $paginator = $model->$camelRel;
