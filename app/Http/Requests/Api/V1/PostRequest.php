@@ -15,7 +15,11 @@ final class PostRequest extends FormRequest
         return [
             'user_id' => ['required', 'exists:users,id'],
             'title'   => ['required'],
-            'status'  => ['required', Rule::enum(PostStatusEnum::class)],
+            'status'  => [
+                'sometimes',
+                Rule::requiredIf((bool) $this->route('post')),
+                Rule::enum(PostStatusEnum::class),
+            ],
         ];
     }
 

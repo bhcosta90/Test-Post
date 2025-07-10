@@ -31,7 +31,9 @@ trait AsApiController
 
     final public function store(): GenericResource
     {
-        $request = app($this->getNamespaceRequest('update'));
+        $request = app($this->getNamespaceRequest('store'));
+
+        abort_unless($request->authorize(), 403, 'This action is unauthorized.');
 
         return new GenericResource($this->model()->create($request->validated()));
     }
@@ -45,6 +47,8 @@ trait AsApiController
     {
         $request = app($this->getNamespaceRequest('update'));
         $model   = $this->findByOne($request);
+
+        abort_unless($request->authorize(), 403, 'This action is unauthorized.');
 
         return new GenericResource(tap($model)->update($request->validated()));
     }
