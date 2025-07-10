@@ -5,13 +5,13 @@ declare(strict_types = 1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CommentRequest;
-use App\Http\Resources\GenericResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
+use QuantumTecnology\ControllerQraphQLExtension\Resources\GenericResource;
 
 abstract class Controller
 {
