@@ -112,7 +112,6 @@ final class GenericPresenter
                 foreach ($parts as $index => $part) {
                     $path = '' === $path ? $part : $path . '.' . $part;
 
-                    // ignora o último que é o campo, pega só as relações
                     if ($index < count($parts) - 1) {
                         $relationsFromFields[] = $path;
                     }
@@ -120,7 +119,7 @@ final class GenericPresenter
             }
         }
 
-        return $relationsFromFields;
+        return array_unique($relationsFromFields);
     }
 
     private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar): ?array
@@ -137,7 +136,7 @@ final class GenericPresenter
         $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
 
         $page    = $pagination[$relationKey]['page'] ?? 1;
-        $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''));
+        $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''), $relationKey);
 
         if ($relationObject instanceof Relations\HasMany) {
             $paginator = $relationObject->simplePaginate($perPage, ['*'], 'page', $page);

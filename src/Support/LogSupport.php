@@ -10,7 +10,7 @@ final class LogSupport
 
     public static function add($message): void
     {
-        if (app()->isLocal()) {
+        if (config('app.debug')) {
             $stackTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
 
             self::$messages[$message . $stackTrace[1]['line']] = [

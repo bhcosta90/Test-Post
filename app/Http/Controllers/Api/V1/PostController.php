@@ -9,7 +9,7 @@ use App\Models\Post;
 use Illuminate\Database\Eloquent\Model;
 use QuantumTecnology\ControllerQraphQLExtension\Traits\AsApiController;
 
-final class PostController extends Controller
+final class PostController
 {
     use AsApiController;
 

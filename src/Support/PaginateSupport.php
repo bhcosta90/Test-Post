@@ -6,7 +6,7 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Support;
 
 final class PaginateSupport
 {
-    public function calculatePerPage(?string $perPage): int
+    public function calculatePerPage(?string $perPage, string $path): int
     {
         if (blank($perPage)) {
             $perPage = config('quantum-controller-graphql.per_page');
@@ -16,9 +16,10 @@ final class PaginateSupport
             $perPage = config('quantum-controller-graphql.max_page');
             LogSupport::add(
                 sprintf(
-                    'Per page value %s exceeds maximum allowed %s, setting to maximum.',
+                    'Per page value %s exceeds maximum allowed %s, setting to maximum on the %s.',
                     $perPage,
-                    config('quantum-controller-graphql.max_page')
+                    config('quantum-controller-graphql.max_page'),
+                    $path
                 )
             );
         }

@@ -22,7 +22,7 @@ trait AsApiController
         $query = $this->queryModel($request);
 
         $page    = $request->input('page', 1);
-        $perPage = $paginateSupport->calculatePerPage($request->input('perPage'));
+        $perPage = $paginateSupport->calculatePerPage($request->input('perPage'), 'father');
 
         $models = $query->paginate($perPage, ['*'], 'page', $page);
 
