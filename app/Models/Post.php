@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace App\Models;
 
+use App\Models\Enum\PostStatusEnum;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +16,10 @@ final class Post extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    protected $casts = [
+        'status' => PostStatusEnum::class,
+    ];
 
     public function comments(): HasMany
     {

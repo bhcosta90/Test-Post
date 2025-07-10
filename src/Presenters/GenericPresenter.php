@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
+use BackedEnum;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
 use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
@@ -39,7 +41,15 @@ final class GenericPresenter
             if (is_array($value) && true !== $nested) {
                 $output[$field] = collect($value)->only($nested)->toArray();
             } else {
-                $output[$field] = $value;
+                $output[$field] = match (true) {
+                    $value instanceof CarbonImmutable => $value->toDateTimeString(),
+                    $value instanceof BackedEnum      => [
+                        'type'  => 'enum',
+                        'value' => $value->value,
+                        'key'   => $value->name,
+                    ],
+                    default => $value
+                };
             }
         }
 
