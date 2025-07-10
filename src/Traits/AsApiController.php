@@ -76,14 +76,15 @@ trait AsApiController
         $genericPresenter = app(GenericPresenter::class);
 
         $allIncludes = $genericPresenter->getIncludes($this->model(), $request->input('fields', ''));
+        $allCount    = $genericPresenter->getWithCount($this->model(), $allIncludes);
 
         if (filled($allIncludes)) {
             $query = $query->with($allIncludes);
         }
 
-        $request->merge([
-            'include' => implode(',', $allIncludes),
-        ]);
+        if (filled($allCount)) {
+            $query = $query->withCount($allCount);
+        }
 
         return $query;
     }

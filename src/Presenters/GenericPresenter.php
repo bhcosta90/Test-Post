@@ -54,8 +54,8 @@ final class GenericPresenter
             }
         }
 
-        foreach ($includes as $includePath) {
-            $segments = explode('.', $includePath);
+        foreach ($includes as $key => $includeValue) {
+            $segments = explode('.', is_int($key) ? $includeValue : $key);
             $this->handleIncludePath($model, $output, $fields, $pagination, $segments, []);
         }
 
@@ -98,34 +98,6 @@ final class GenericPresenter
     public function getIncludes(Model $model, string $fields): array
     {
         $relationsFromFields = [];
-
-        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
-
-        foreach ($fieldsArray as $field) {
-            if (str_contains($field, 'actions.')) {
-                continue;
-            }
-
-            if (Str::contains($field, '.')) {
-                $parts = explode('.', $field);
-                $path  = '';
-
-                foreach ($parts as $index => $part) {
-                    $path = '' === $path ? $part : $path . '.' . $part;
-
-                    if ($index < count($parts) - 1) {
-                        $relationsFromFields[] = $path;
-                    }
-                }
-            }
-        }
-
-        return array_unique($relationsFromFields);
-    }
-
-    public function extractIncludesWithPagination(string $fields, Model $model): array
-    {
-        $relationsFromFields = [];
         $includes            = [];
 
         $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
@@ -150,20 +122,20 @@ final class GenericPresenter
         }
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
-            $relationSegments = explode('.', $relationPath);
-            $currentModel     = $model;
-            $isHasMany        = true;
+            $segments     = explode('.', $relationPath);
+            $currentModel = $model;
+            $isHasMany    = true;
 
-            foreach ($relationSegments as $segment) {
-                $camelMethod = Str::camel($segment);
+            foreach ($segments as $segment) {
+                $method = Str::camel($segment);
 
-                if (!method_exists($currentModel, $camelMethod)) {
+                if (!method_exists($currentModel, $method)) {
                     $isHasMany = false;
 
                     break;
                 }
 
-                $relation = $currentModel->$camelMethod();
+                $relation = $currentModel->$method();
 
                 if (!($relation instanceof Relations\Relation)) {
                     $isHasMany = false;
@@ -171,9 +143,7 @@ final class GenericPresenter
                     break;
                 }
 
-                if ($relation instanceof Relations\HasMany) {
-                    // continua verificando
-                } else {
+                if (!$relation instanceof Relations\HasMany) {
                     $isHasMany = false;
                 }
 
@@ -181,16 +151,38 @@ final class GenericPresenter
             }
 
             if ($isHasMany) {
-                // Remove include tradicional e substitui por função
-                $root            = explode('.', $relationPath)[0];
-                $includes[$root] = fn ($query) => $query->paginate(5); // customize aqui
+                $root = explode('.', $relationPath)[0];
+
+                $includes[$root] = fn ($query) => $query->limit(5);
+            } else {
+                $includes[] = $relationPath;
             }
         }
 
         return $includes;
     }
 
-    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar): ?array
+    public function getWithCount(Model $model, $allIncludes): array
+    {
+        $withCount = [];
+
+        foreach ($allIncludes as $key => $value) {
+            $relation = is_int($key) ? $value : $key;
+
+            if (method_exists($model, Str::camel($relation))) {
+                $relationObject = $model->{Str::camel($relation)}();
+
+                if ($relationObject instanceof Relations\HasMany) {
+                    $withCount[] = $relation;
+                }
+
+            }
+        }
+
+        return $withCount;
+    }
+
+    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar)
     {
         $relation = array_shift($segments);
         $camelRel = Str::camel($relation);
@@ -201,24 +193,30 @@ final class GenericPresenter
         }
 
         $relationObject = $model->$camelRel();
-        //        $relationKey    = lcfirst(implode('', array_map('ucfirst', [...$pathSoFar, $relation])));
-        //        $page    = $pagination[$relationKey]['page'] ?? 1;
-        //        $perPage = $this->paginateSupport->calculatePerPage((string) ($pagination[$relationKey]['perPage'] ?? ''), $relationKey);
 
         if ($relationObject instanceof Relations\HasMany) {
-            $paginator = $model->$camelRel;
+            $related = $model->$camelRel;
 
-            if (!$paginator) {
+            if (!$related) {
                 return null;
             }
 
-            $output[$relation] = $paginator->map(function ($item) use ($fields, $fullPath, $pagination) {
-                return $this->transform($item, [
-                    'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
-                    'include'    => '',
-                    'pagination' => $pagination,
-                ]);
-            });
+            $countAttribute = $relation . '_count';
+
+            $output[$relation] = [
+                'data' => $related->map(function ($item) use ($fields, $fullPath, $pagination) {
+                    return $this->transform($item, [
+                        'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
+                        'include'    => '',
+                        'pagination' => $pagination,
+                    ]);
+                }),
+                'meta' => [
+                    'total' => $model->$countAttribute,
+                    'limit' => $related->count(),
+                ],
+            ];
+
         } elseif ($relationObject instanceof Relations\BelongsTo) {
             $related = $model->$camelRel;
 
