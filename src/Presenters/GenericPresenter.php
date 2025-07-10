@@ -6,6 +6,7 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
@@ -121,65 +122,65 @@ final class GenericPresenter
             }
         }
 
+        $includes       = [];
+        $withCount      = [];
+        $processedPaths = [];
+
         foreach (array_unique($relationsFromFields) as $relationPath) {
             $segments     = explode('.', $relationPath);
             $currentModel = $model;
-            $isHasMany    = true;
+            $pathSoFar    = [];
 
             foreach ($segments as $segment) {
-                $method = Str::camel($segment);
+                $pathSoFar[] = $segment;
+                $currentPath = implode('.', $pathSoFar);
+                $method      = Str::camel($segment);
 
                 if (!method_exists($currentModel, $method)) {
-                    $isHasMany = false;
-
                     break;
                 }
 
                 $relation = $currentModel->$method();
 
                 if (!($relation instanceof Relations\Relation)) {
-                    $isHasMany = false;
-
                     break;
                 }
 
-                if (!$relation instanceof Relations\HasMany) {
-                    $isHasMany = false;
+                if ($relation instanceof Relations\HasMany) {
+                    // include com limit
+                    if (!isset($processedPaths[$currentPath])) {
+                        $includes[$currentPath]       = fn ($query) => $query->limit(5);
+                        $processedPaths[$currentPath] = true;
+                    }
+
+                    // registra o withCount para essa relação
+                    $withCount[] = $currentPath;
+                } else {
+                    // outras relações apenas adicionam o include simples
+                    if (!in_array($currentPath, $includes, true) && !isset($processedPaths[$currentPath])) {
+                        $includes[]                   = $currentPath;
+                        $processedPaths[$currentPath] = true;
+                    }
                 }
 
                 $currentModel = $relation->getRelated();
-            }
-
-            if ($isHasMany) {
-                $root = explode('.', $relationPath)[0];
-
-                $includes[$root] = fn ($query) => $query->limit(5);
-            } else {
-                $includes[] = $relationPath;
             }
         }
 
         return $includes;
     }
 
-    public function getWithCount(Model $model, $allIncludes): array
+    public function getWithCount(Model $model, array $allIncludes): array
     {
         $withCount = [];
 
         foreach ($allIncludes as $key => $value) {
-            $relation = is_int($key) ? $value : $key;
-
-            if (method_exists($model, Str::camel($relation))) {
-                $relationObject = $model->{Str::camel($relation)}();
-
-                if ($relationObject instanceof Relations\HasMany) {
-                    $withCount[] = $relation;
-                }
-
+            if ($value instanceof Closure) {
+                $withCount[] = $key;
             }
         }
 
-        return $withCount;
+        return array_unique($withCount);
     }
 
     private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar)
@@ -212,7 +213,7 @@ final class GenericPresenter
                     ]);
                 }),
                 'meta' => [
-                    'total' => $model->$countAttribute,
+                    'total' => $model->{$countAttribute} ?? null,
                     'limit' => $related->count(),
                 ],
             ];
