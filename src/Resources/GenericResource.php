@@ -11,8 +11,6 @@ final class GenericResource extends JsonResource
 {
     public function toArray($request): array
     {
-        return app(GenericPresenter::class)->transform($this->resource, [
-            'fields' => $request->input('fields', ''),
-        ]);
+        return app(GenericPresenter::class)->transform($this->resource, $request->all());
     }
 }

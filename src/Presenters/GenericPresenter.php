@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
+use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
 
 final class GenericPresenter
@@ -107,14 +108,14 @@ final class GenericPresenter
         return $relationsFromFields;
     }
 
-    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar)
+    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar): ?array
     {
         $relation = array_shift($segments);
         $camelRel = Str::camel($relation);
         $fullPath = implode('.', [...$pathSoFar, $relation]);
 
         if (!method_exists($model, $camelRel)) {
-            return;
+            return null;
         }
 
         $relationObject = $model->$camelRel();
@@ -123,7 +124,7 @@ final class GenericPresenter
         $page    = $pagination[$relationKey]['page'] ?? 1;
         $perPage = $pagination[$relationKey]['perPage'] ?? 5;
 
-        if ($relationObject instanceof \Illuminate\Database\Eloquent\Relations\HasMany) {
+        if ($relationObject instanceof Relations\HasMany) {
             $paginator = $relationObject->simplePaginate($perPage, ['*'], 'page', $page);
 
             $data = $paginator->getCollection()->map(function ($item) use ($fields, $fullPath, $pagination) {
@@ -142,11 +143,11 @@ final class GenericPresenter
                     'has_more_page' => $paginator->hasMorePages(),
                 ],
             ];
-        } elseif ($relationObject instanceof \Illuminate\Database\Eloquent\Relations\BelongsTo) {
+        } elseif ($relationObject instanceof Relations\BelongsTo) {
             $related = $model->$camelRel;
 
             if (!$related) {
-                return;
+                return null;
             }
 
             $output[$relation] = $this->transform($related, [
@@ -167,6 +168,8 @@ final class GenericPresenter
                 $this->handleIncludePath((object) $output[$relation], $output[$relation], $fields, $pagination, $segments, [...$pathSoFar, $relation]);
             }
         }
+
+        return null;
     }
 
     private function parseFields(string $raw): array

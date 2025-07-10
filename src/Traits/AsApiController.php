@@ -12,17 +12,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
 use QuantumTecnology\ControllerQraphQLExtension\Resources\GenericResource;
+use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
 
 trait AsApiController
 {
     abstract protected function model(): Model;
 
-    final public function index(Request $request): AnonymousResourceCollection
+    final public function index(Request $request, PaginateSupport $paginateSupport): AnonymousResourceCollection
     {
         $query = $this->queryModel($request);
 
         $page    = $request->input('page', 1);
-        $perPage = $request->input('perPage', 1);
+        $perPage = $paginateSupport->calculatePerPage($request->input('perPage'));
 
         $models = $query->paginate($perPage, ['*'], 'page', $page);
 
