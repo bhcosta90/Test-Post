@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
+use QuantumTecnology\ControllerQraphQLExtension\QueryBuilder\GenerateQuery;
 use QuantumTecnology\ControllerQraphQLExtension\Resources\GenericResource;
 use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
 
@@ -72,20 +73,16 @@ trait AsApiController
     protected function queryModel(Request $request): Builder
     {
         $fields = $request->input('fields', '');
-        $query  = $this->model()->query();
 
         $genericPresenter = app(GenericPresenter::class);
-        $pagination       = $genericPresenter->extractPagination($request->all());
 
-        if (filled($allIncludes = $genericPresenter->getIncludes($this->model(), $fields, $pagination))) {
-            $query->with($allIncludes);
-        }
-
-        if (filled($allCount = $genericPresenter->getWithCount($this->model(), $allIncludes))) {
-            $query->withCount($allCount);
-        }
-
-        return $query;
+        return app(GenerateQuery::class, [
+            'model'         => $this->model(),
+            'classCallable' => $this,
+        ])->execute(
+            fields: $fields,
+            pagination: $genericPresenter->extractPagination($request->all())
+        );
     }
 
     protected function getNamespaceRequest(?string $action = null): string
