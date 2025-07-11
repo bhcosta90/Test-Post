@@ -12,14 +12,14 @@ final class PostController
 {
     use AsApiController;
 
-    public function queryCommentsPostComments($query)
-    {
-        return $query->idLessThat(3);
-    }
-
+    //    public function queryCommentsPostComments($query)
+    //    {
+    //        return $query->idLessThat(3);
+    //    }
+    //
     public function queryIndexCommentsPostComments($query)
     {
-        return $query->idLessThat(6);
+        return $query->idLessThat(4);
     }
 
     protected function model(): Model
