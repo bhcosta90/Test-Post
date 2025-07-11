@@ -69,7 +69,7 @@ trait AsApiController
         return $this->queryModel($request, __FUNCTION__)->where($id, end($routeParams))->sole();
     }
 
-    protected function queryModel(Request $request, string $action): Builder
+    protected function queryModel(Request $request): Builder
     {
         $fields = $request->input('fields', '');
 

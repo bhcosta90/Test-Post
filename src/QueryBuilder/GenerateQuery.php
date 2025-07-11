@@ -19,7 +19,6 @@ final class GenerateQuery
     public function execute(
         string $fields = '',
         array $pagination = [],
-        array $includes = [],
     ): Builder {
         $query = $this->model->query();
 
@@ -29,7 +28,6 @@ final class GenerateQuery
             $this->model,
             $fields,
             $pagination,
-            $includes,
         ))) {
             $query->with($allIncludes);
         }
