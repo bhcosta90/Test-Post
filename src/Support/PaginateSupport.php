@@ -14,12 +14,11 @@ final class PaginateSupport
 
         if ($perPage > config('quantum-controller-graphql.max_page')) {
             LogSupport::add(
-                sprintf(
-                    'Per page value %s exceeds maximum allowed %s, setting to maximum on the %s.',
-                    $perPage,
-                    config('quantum-controller-graphql.max_page'),
-                    'per_page_' . str_replace('.', '_', $path)
-                )
+                __('The :field value (:per_page) exceeds the maximum allowed (:max_page). It has been set to the maximum value of :max_page.', [
+                    'per_page' => $perPage,
+                    'max_page' => config('quantum-controller-graphql.max_page'),
+                    'field'    => 'per_page_' . str_replace('.', '_', $path),
+                ])
             );
 
             $perPage = config('quantum-controller-graphql.max_page');
