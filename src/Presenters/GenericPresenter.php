@@ -118,6 +118,10 @@ final class GenericPresenter
                         $currentPath
                     );
 
+                    $page    = ($pagination[$currentPath]['page'] ?? 1);
+                    $perPage = ($pagination[$currentPath]['per_page'] ?? $limit);
+                    $offset  = ($page - 1) * $perPage;
+
                     $currentPathUnderline = str_replace('.', '_', $currentPath);
                     $filterOfInclude      = $filters[$currentPathUnderline] ?? [];
 
@@ -129,6 +133,7 @@ final class GenericPresenter
                             $action,
                             $currentPath,
                         ) ?: $query)
+                            ->offset($offset)
                             ->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
@@ -282,8 +287,9 @@ final class GenericPresenter
                     ], fields: $this->transformArrayToString($fields[$fullPath] ?? []));
                 }),
                 'meta' => [
-                    'total' => $model->{$countAttribute} ?? null,
-                    'limit' => $related->count(),
+                    'total_items'    => $model->{$countAttribute} ?? null,
+                    'items_returned' => $related->count(),
+                    'has_more_pages' => ($model->{$countAttribute} ?? 0) > ($pagination[$fullPath]['page'] ?? 1) * ($pagination[$fullPath]['per_page'] ?? $related->count()),
                 ],
             ];
 
