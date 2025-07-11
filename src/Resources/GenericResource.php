@@ -14,6 +14,7 @@ final class GenericResource extends JsonResource
         return app(GenericPresenter::class)->transform(
             $this->resource,
             options: $request->all(),
+            fields: $request->input('fields')
         );
     }
 }

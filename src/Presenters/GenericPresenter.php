@@ -20,10 +20,11 @@ final class GenericPresenter
     public function transform(
         Model $model,
         array $options = [],
+        string $fields = ''
     ): array {
-        $internalFields = $this->parseFields($options['fields'] ?? '');
+        $internalFields = $this->parseFields($fields);
         $pagination     = $this->extractPagination($options);
-        $includes       = $this->getIncludes($model, $options['fields'] ?? '', $pagination);
+        $includes       = $this->getIncludes($model, $fields, $pagination);
 
         $output = [];
 
@@ -256,10 +257,9 @@ final class GenericPresenter
             $output[$relation] = [
                 'data' => $related->map(function ($item) use ($fields, $fullPath, $pagination) {
                     return $this->transform($item, [
-                        'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
                         'include'    => '',
                         'pagination' => $pagination,
-                    ]);
+                    ], fields: $this->transformArrayToString($fields[$fullPath] ?? []));
                 }),
                 'meta' => [
                     'total' => $model->{$countAttribute} ?? null,
@@ -275,10 +275,9 @@ final class GenericPresenter
             }
 
             $output[$relation] = $this->transform($related, [
-                'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
                 'include'    => '',
                 'pagination' => $pagination,
-            ]);
+            ], fields: $this->transformArrayToString($fields[$fullPath] ?? []));
         }
 
         if (!empty($segments)) {
