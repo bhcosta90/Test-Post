@@ -28,6 +28,12 @@ final class Comment extends Model
         return $query->where('id', '<', $id);
     }
 
+    #[Scope]
+    public function byId(Builder $query, array $id): Builder
+    {
+        return $query->whereIn('id', $id);
+    }
+
     public function getCanDeleteAttribute(): bool
     {
         return true;

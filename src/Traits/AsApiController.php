@@ -126,7 +126,13 @@ trait AsApiController
 
                 $segments     = explode('_', $rawPath);
                 $field        = array_pop($segments);
+                $isBy         = 'by' === end($segments);
                 $relationPath = implode('_', $segments) ?: $this->model()::class;
+
+                if ($isBy) {
+                    $field        = 'by_' . $field;
+                    $relationPath = mb_substr($relationPath, 0, -3);
+                }
 
                 if (is_array($value) && null === $operator) {
                     foreach ($value as $op => $val) {

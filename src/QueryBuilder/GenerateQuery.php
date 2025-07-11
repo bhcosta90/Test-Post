@@ -6,6 +6,7 @@ namespace QuantumTecnology\ControllerQraphQLExtension\QueryBuilder;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
 
 final class GenerateQuery
@@ -50,9 +51,18 @@ final class GenerateQuery
     {
         foreach ($filters as $field => $values) {
             foreach ($values as $operator => $data) {
+                $camel = Str::camel($field);
+                $model = $query->getModel();
+                $table = $model->getTable();
+
+                if (method_exists($model, $camel)) {
+                    $query->{$camel}($data);
+
+                    return;
+                }
                 match ($operator) {
-                    'in'    => $query->whereIn($field, $data),
-                    default => $query->where($field, $operator, $data)
+                    'in'    => $query->whereIn($table . '.' . $field, $data),
+                    default => $query->where($table . '.' . $field, $operator, $data)
                 };
             }
         }
