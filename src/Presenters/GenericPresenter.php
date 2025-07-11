@@ -22,8 +22,8 @@ final class GenericPresenter
         array $options = [],
         string $fields = ''
     ): array {
+        $pagination     = $this->paginateSupport->extractPagination($options);
         $internalFields = $this->parseFields($fields);
-        $pagination     = $this->extractPagination($options);
         $includes       = $this->getIncludes($model, $fields, $pagination);
 
         $output = [];
@@ -76,27 +76,6 @@ final class GenericPresenter
                     ->put('actions', $metaActions)
                     ->toArray();
             });
-    }
-
-    public function extractPagination(array $input): array
-    {
-        $pagination = [];
-
-        foreach ($input as $key => $value) {
-            if (preg_match('/^(per_page|page)_(.+)$/', $key, $matches)) {
-                [$type, $rawPath] = [$matches[1], $matches[2]];
-
-                $relationPath = str_replace('_', '.', $rawPath);
-
-                if (!isset($pagination[$relationPath])) {
-                    $pagination[$relationPath] = [];
-                }
-
-                $pagination[$relationPath][$type] = (int) $value;
-            }
-        }
-
-        return $pagination;
     }
 
     public function getIncludes(Model $model, string $fields, array $pagination): array

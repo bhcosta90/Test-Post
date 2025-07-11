@@ -26,4 +26,25 @@ final class PaginateSupport
 
         return (int) ($perPage ?: 1);
     }
+
+    public function extractPagination(array $input): array
+    {
+        $pagination = [];
+
+        foreach ($input as $key => $value) {
+            if (preg_match('/^(per_page|page)_(.+)$/', $key, $matches)) {
+                [$type, $rawPath] = [$matches[1], $matches[2]];
+
+                $relationPath = str_replace('_', '.', $rawPath);
+
+                if (!isset($pagination[$relationPath])) {
+                    $pagination[$relationPath] = [];
+                }
+
+                $pagination[$relationPath][$type] = (int) $value;
+            }
+        }
+
+        return $pagination;
+    }
 }

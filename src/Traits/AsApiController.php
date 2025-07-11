@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
 use QuantumTecnology\ControllerQraphQLExtension\QueryBuilder\GenerateQuery;
 use QuantumTecnology\ControllerQraphQLExtension\Resources\GenericResource;
 use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
@@ -79,7 +78,7 @@ trait AsApiController
             'classCallable' => $this,
         ])->execute(
             fields: $fields,
-            pagination: app(GenericPresenter::class)->extractPagination($request->all())
+            pagination: app(PaginateSupport::class)->extractPagination($request->all())
         );
     }
 
