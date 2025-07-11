@@ -129,7 +129,6 @@ trait AsApiController
                 $field        = array_pop($segments);
                 $relationPath = implode('_', $segments);
 
-                // Se $value for array associativo com operadores (sem operador na chave)
                 if (is_array($value) && null === $operator) {
                     foreach ($value as $op => $val) {
                         $parsedValues = is_string($val)
