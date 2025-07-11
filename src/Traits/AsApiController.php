@@ -73,6 +73,7 @@ trait AsApiController
     {
         $fields = $request->input('fields', '');
 
+        dd($this->extractFilter($request->all()));
         $query = app(GenerateQuery::class, [
             'model'         => $this->model(),
             'classCallable' => $this,
@@ -80,6 +81,7 @@ trait AsApiController
         ])->execute(
             fields: $fields,
             pagination: app(PaginateSupport::class)->extractPagination($request->all()),
+            filters: $this->extractFilter($request->all()),
         );
 
         if (config('app.debug')) {
@@ -112,5 +114,28 @@ trait AsApiController
         }
 
         return self::getNamespaceRequest();
+    }
+
+    protected function extractFilter(array $input): array
+    {
+        $filters = [];
+
+        foreach ($input as $key => $value) {
+            if (preg_match('/^(scope)_(.+)$/', $key, $matches)) {
+                [, $rawPath] = [$matches[1], $matches[2]];
+
+                $segments     = explode('_', $rawPath);
+                $field        = array_pop($segments); // exemplo: 'id'
+                $relationPath = implode('_', $segments); // exemplo: 'comments_post_comments'
+
+                $parsedValue = str_contains($value, '|')
+                    ? array_map('intval', explode('|', $value))
+                    : $value;
+
+                $filters[$relationPath][$field] = $parsedValue;
+            }
+        }
+
+        return $filters;
     }
 }
