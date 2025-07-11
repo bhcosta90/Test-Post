@@ -53,7 +53,7 @@ trait AsApiController
             $model = $modelClass->create($data);
             $this->saveChildren($model, $hasMany);
 
-            return new GenericResource($model);
+            return new GenericResource($this->queryModel(request(), 'store')->find($model->id));
         });
     }
 
@@ -90,16 +90,16 @@ trait AsApiController
 
     protected function queryModel(Request $request, string $action): Builder
     {
-        $fields = $request->input('fields', '');
+        $data = $request->query();
 
         $query = app(GenerateQuery::class, [
             'model'         => $this->model(),
             'classCallable' => $this,
             'action'        => $action,
         ])->execute(
-            fields: $fields,
-            pagination: app(PaginateSupport::class)->extractPagination($request->all()),
-            filters: $this->extractFilter($request->all()),
+            fields: $data['fields'] ?? [],
+            pagination: app(PaginateSupport::class)->extractPagination($data),
+            filters: $this->extractFilter($data),
         );
 
         if (config('app.debug')) {
