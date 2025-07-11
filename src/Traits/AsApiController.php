@@ -149,7 +149,6 @@ trait AsApiController
                         $filters[$relationPath][$field][$op] = $parsedValues;
                     }
                 } else {
-                    // Caso normal: operador explícito ou padrão 'in'
                     if (is_array($value)) {
                         $parsedValues = $value;
                     } elseif (is_string($value)) {
