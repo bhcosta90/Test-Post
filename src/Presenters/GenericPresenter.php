@@ -349,17 +349,15 @@ final class GenericPresenter
                 $method = 'query' . Str::studly(str_replace('.', '_', $action . ' ' . $relationPath));
 
                 if (method_exists($classCallable, $method)) {
-                    return $classCallable->{$method}($query);
+                    $classCallable->{$method}($query);
                 }
             }
 
             $method = 'query' . Str::studly(str_replace('.', '_', $relationPath));
 
             if (method_exists($classCallable, $method)) {
-                return $classCallable->{$method}($query);
+                $classCallable->{$method}($query);
             }
         }
-
-        return null;
     }
 }
