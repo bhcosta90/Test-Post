@@ -17,15 +17,17 @@ final class GenericPresenter
     {
     }
 
-    public function transform(Model $model, array $options = []): array
-    {
-        $fields     = $this->parseFields($options['fields'] ?? '');
-        $pagination = $this->extractPagination($options);
-        $includes   = $this->getIncludes($model, $options['fields'] ?? '', $pagination);
+    public function transform(
+        Model $model,
+        array $options = [],
+    ): array {
+        $internalFields = $this->parseFields($options['fields'] ?? '');
+        $pagination     = $this->extractPagination($options);
+        $includes       = $this->getIncludes($model, $options['fields'] ?? '', $pagination);
 
         $output = [];
 
-        $selfFields = $fields['__self'] ?? [];
+        $selfFields = $internalFields['__self'] ?? [];
 
         // Adiciona automaticamente os campos que começam com "can"
         foreach (get_object_vars($model) as $key => $value) {
@@ -56,7 +58,7 @@ final class GenericPresenter
 
         foreach ($includes as $key => $includeValue) {
             $segments = explode('.', is_int($key) ? $includeValue : $key);
-            $this->handleIncludePath($model, $output, $fields, $pagination, $segments, []);
+            $this->handleIncludePath($model, $output, $internalFields, $pagination, $segments, []);
         }
 
         return collect($output)
