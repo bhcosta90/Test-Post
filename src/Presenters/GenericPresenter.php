@@ -79,8 +79,11 @@ final class GenericPresenter
             });
     }
 
-    public function getIncludes(Model $model, string $fields, array $pagination): array
-    {
+    public function getIncludes(
+        Model $model,
+        string $fields,
+        array $pagination
+    ): array {
         $includes            = [];
         $processedPaths      = [];
         $relationsFromFields = $this->getIncludesByFields($fields);
