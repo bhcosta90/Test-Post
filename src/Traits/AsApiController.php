@@ -123,46 +123,45 @@ trait AsApiController
         foreach ($input as $key => $value) {
             if (preg_match('/^scope_(.+?)(?:\[(.+)\])?$/', $key, $matches)) {
                 $rawPath  = $matches[1];
-                $operator = $matches[2] ?? 'in';
+                $operator = $matches[2] ?? null;
 
                 $segments     = explode('_', $rawPath);
                 $field        = array_pop($segments);
                 $relationPath = implode('_', $segments);
 
-                // Caso o valor já seja array com operador como chave (ex: ['>=' => '2,2,5']),
-                // vamos detectar e tratar corretamente
-                if (is_array($value) && 1 === count($value)) {
-                    // extrai a chave e o valor do array
-                    $firstKey = array_key_first($value);
-                    $firstVal = $value[$firstKey];
+                // Se $value for array associativo com operadores (sem operador na chave)
+                if (is_array($value) && null === $operator) {
+                    foreach ($value as $op => $val) {
+                        $parsedValues = is_string($val)
+                            ? explode('|', $val)
+                            : (array) $val;
 
-                    // se a chave do array for operador, usamos ela como operador real,
-                    // e o valor como valor para processar
-                    if (preg_match('/^[=!<>]+$/', $firstKey) || 'in' === $firstKey || 'like' === $firstKey) {
-                        $operator = $firstKey;
-                        $value    = $firstVal;
+                        $parsedValues = array_map(function ($v) {
+                            $v = mb_trim($v);
+
+                            return is_numeric($v) ? (int) $v : $v;
+                        }, $parsedValues);
+
+                        $filters[$relationPath][$field][$op] = $parsedValues;
                     }
-                }
-
-                // Normaliza valor para array, separando por ',' ou '|'
-                if (is_array($value)) {
-                    $parsedValues = $value;
-                } elseif (is_string($value)) {
-                    $parsedValues = preg_split('/[,\|]/', $value);
                 } else {
-                    $parsedValues = [$value];
+                    // Caso normal: operador explícito ou padrão 'in'
+                    if (is_array($value)) {
+                        $parsedValues = $value;
+                    } elseif (is_string($value)) {
+                        $parsedValues = explode('|', $value);
+                    } else {
+                        $parsedValues = [$value];
+                    }
+
+                    $parsedValues = array_map(function ($v) {
+                        $v = mb_trim($v);
+
+                        return is_numeric($v) ? (int) $v : $v;
+                    }, $parsedValues);
+
+                    $filters[$relationPath][$field][$operator ?? 'in'] = $parsedValues;
                 }
-
-                // Limpa e converte valores
-                $parsedValues = array_map(function ($v) {
-                    $v = mb_trim($v);
-
-                    return is_numeric($v) ? (int) $v : $v;
-                }, $parsedValues);
-
-                $filters[$relationPath][$field] = [
-                    $operator => $parsedValues,
-                ];
             }
         }
 
