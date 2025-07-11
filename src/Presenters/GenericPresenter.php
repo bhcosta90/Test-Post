@@ -116,7 +116,8 @@ final class GenericPresenter
                         ->calculatePerPage((string) ($pagination[$currentPath]['per_page'] ?? ''), $currentPath);
 
                     if (!isset($processedPaths[$currentPath])) {
-                        $includes[$currentPath]       = fn ($query) => ($this->getQueryCallable($query, $classCallable, $action, $currentPath) ?: $query)->limit($limit);
+                        $includes[$currentPath] = fn ($query) => ($this->getQueryCallable($query, $classCallable, $action, $currentPath) ?: $query)
+                            ->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
 
@@ -347,7 +348,7 @@ final class GenericPresenter
         ?object $classCallable,
         ?string $action,
         string $relationPath
-    ): void {
+    ) {
         if ($classCallable) {
             if ($action) {
                 $method = 'query' . Str::studly(str_replace('.', '_', $action . ' ' . $relationPath));
