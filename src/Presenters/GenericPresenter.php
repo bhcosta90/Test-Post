@@ -6,6 +6,7 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
