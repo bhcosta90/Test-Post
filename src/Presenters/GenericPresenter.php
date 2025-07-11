@@ -342,8 +342,12 @@ final class GenericPresenter
         return $fields;
     }
 
-    private function getQueryCallable($query, ?object $classCallable, ?string $action, string $relationPath): void
-    {
+    private function getQueryCallable(
+        $query,
+        ?object $classCallable,
+        ?string $action,
+        string $relationPath
+    ): void {
         if ($classCallable) {
             if ($action) {
                 $method = 'query' . Str::studly(str_replace('.', '_', $action . ' ' . $relationPath));
