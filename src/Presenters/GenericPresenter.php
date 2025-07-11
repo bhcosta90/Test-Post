@@ -81,6 +81,8 @@ final class GenericPresenter
 
     public function getIncludes(Model $model, string $fields, array $pagination): array
     {
+        $includes            = [];
+        $processedPaths      = [];
         $relationsFromFields = $this->getIncludesByFields($fields);
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
