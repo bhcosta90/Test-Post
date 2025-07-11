@@ -342,7 +342,7 @@ final class GenericPresenter
         return $fields;
     }
 
-    private function getQueryCallable($query, ?object $classCallable, ?string $action, string $relationPath)
+    private function getQueryCallable($query, ?object $classCallable, ?string $action, string $relationPath): void
     {
         if ($classCallable) {
             if ($action) {
