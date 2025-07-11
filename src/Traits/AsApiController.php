@@ -121,21 +121,52 @@ trait AsApiController
         $filters = [];
 
         foreach ($input as $key => $value) {
-            if (preg_match('/^(scope)_(.+)$/', $key, $matches)) {
-                [, $rawPath] = [$matches[1], $matches[2]];
+            if (preg_match('/^scope_(.+?)(?:\[(.+)\])?$/', $key, $matches)) {
+                $rawPath  = $matches[1];
+                $operator = $matches[2] ?? 'in';
 
                 $segments     = explode('_', $rawPath);
-                $field        = array_pop($segments); // exemplo: 'id'
-                $relationPath = implode('_', $segments); // exemplo: 'comments_post_comments'
+                $field        = array_pop($segments);
+                $relationPath = implode('_', $segments);
 
-                $parsedValue = str_contains($value, '|')
-                    ? array_map('intval', explode('|', $value))
-                    : $value;
+                // Caso o valor já seja array com operador como chave (ex: ['>=' => '2,2,5']),
+                // vamos detectar e tratar corretamente
+                if (is_array($value) && 1 === count($value)) {
+                    // extrai a chave e o valor do array
+                    $firstKey = array_key_first($value);
+                    $firstVal = $value[$firstKey];
 
-                $filters[$relationPath][$field] = $parsedValue;
+                    // se a chave do array for operador, usamos ela como operador real,
+                    // e o valor como valor para processar
+                    if (preg_match('/^[=!<>]+$/', $firstKey) || 'in' === $firstKey || 'like' === $firstKey) {
+                        $operator = $firstKey;
+                        $value    = $firstVal;
+                    }
+                }
+
+                // Normaliza valor para array, separando por ',' ou '|'
+                if (is_array($value)) {
+                    $parsedValues = $value;
+                } elseif (is_string($value)) {
+                    $parsedValues = preg_split('/[,\|]/', $value);
+                } else {
+                    $parsedValues = [$value];
+                }
+
+                // Limpa e converte valores
+                $parsedValues = array_map(function ($v) {
+                    $v = mb_trim($v);
+
+                    return is_numeric($v) ? (int) $v : $v;
+                }, $parsedValues);
+
+                $filters[$relationPath][$field] = [
+                    $operator => $parsedValues,
+                ];
             }
         }
 
         return $filters;
+
     }
 }

@@ -10,6 +10,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
+use QuantumTecnology\ControllerQraphQLExtension\QueryBuilder\GenerateQuery;
 use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
 
 final class GenericPresenter
@@ -83,6 +84,7 @@ final class GenericPresenter
         Model $model,
         string $fields,
         array $pagination,
+        array $filters = [],
         ?object $classCallable = null,
         ?string $action = null,
     ): array {
@@ -111,12 +113,21 @@ final class GenericPresenter
                 }
 
                 if ($relation instanceof Relations\HasMany) {
-                    // include com limit
-                    $limit = $this->paginateSupport
-                        ->calculatePerPage((string) ($pagination[$currentPath]['per_page'] ?? ''), $currentPath);
+                    $limit = $this->paginateSupport->calculatePerPage(
+                        (string) ($pagination[$currentPath]['per_page'] ?? ''),
+                        $currentPath
+                    );
+
+                    $filterOfInclude = $filters[$currentPath] ?? [];
 
                     if (!isset($processedPaths[$currentPath])) {
-                        $includes[$currentPath] = fn ($query) => ($this->getQueryCallable($query, $classCallable, $action, $currentPath) ?: $query)
+                        $includes[$currentPath] = fn ($query) => ($this->getQueryCallable(
+                            $query,
+                            $classCallable,
+                            $filterOfInclude,
+                            $action,
+                            $currentPath,
+                        ) ?: $query)
                             ->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
@@ -141,8 +152,16 @@ final class GenericPresenter
                         $queryChildFields = [];
 
                         foreach ($childFields as $child) {
-                            $currentPathChild         = $currentPath . '.' . $child;
-                            $queryChildFields[$child] = fn ($query) => $this->getQueryCallable($query, $classCallable, $action, $currentPathChild) ?: $query;
+                            $currentPathChild          = $currentPath . '.' . $child;
+                            $currentPathChildUnderline = str_replace('.', '_', $currentPathChild);
+                            $filterOfInclude           = $filters[$currentPathChildUnderline] ?? [];
+                            $queryChildFields[$child]  = fn ($query) => $this->getQueryCallable(
+                                $query,
+                                $classCallable,
+                                $filterOfInclude,
+                                $action,
+                                $currentPathChild
+                            ) ?: $query;
                         }
 
                         $includes[$currentPath] = fn ($query) => $query->withCount($queryChildFields);
@@ -346,6 +365,7 @@ final class GenericPresenter
     private function getQueryCallable(
         $query,
         ?object $classCallable,
+        array $filters,
         ?string $action,
         string $relationPath
     ) {
@@ -369,6 +389,10 @@ final class GenericPresenter
             if (method_exists($classCallable, $method)) {
                 $classCallable->{$method}($query);
             }
+        }
+
+        if (filled($filters)) {
+            app(GenerateQuery::class)->addWhereWithFilters($query, $filters);
         }
 
         return null;

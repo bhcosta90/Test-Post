@@ -11,7 +11,7 @@ use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
 final class GenerateQuery
 {
     public function __construct(
-        protected Model $model,
+        protected ?Model $model = null,
         protected ?object $classCallable = null,
         protected ?string $action = null,
     ) {
@@ -30,6 +30,7 @@ final class GenerateQuery
             $this->model,
             $fields,
             $pagination,
+            $filters,
             $this->classCallable,
             $this->action,
         ))) {
@@ -41,5 +42,10 @@ final class GenerateQuery
         }
 
         return $query;
+    }
+
+    public function addWhereWithFilters($query, array $filters)
+    {
+        dd($filters);
     }
 }
