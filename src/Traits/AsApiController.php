@@ -73,7 +73,7 @@ trait AsApiController
     {
         $fields = $request->input('fields', '');
 
-        return app(GenerateQuery::class, [
+        $query = app(GenerateQuery::class, [
             'model'         => $this->model(),
             'classCallable' => $this,
             'action'        => $action,
@@ -81,6 +81,18 @@ trait AsApiController
             fields: $fields,
             pagination: app(PaginateSupport::class)->extractPagination($request->all()),
         );
+
+        if (config('app.debug')) {
+            match (true) {
+                request()->has('dd')       => $query->dd(),
+                request()->has('dump')     => $query->dump(),
+                request()->has('dd_raw')   => $query->ddRawSql(),
+                request()->has('dump_raw') => $query->dumpRawSql(),
+                default                    => false,
+            };
+        }
+
+        return $query;
     }
 
     protected function getNamespaceRequest(?string $action = null): string
