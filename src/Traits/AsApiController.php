@@ -74,14 +74,12 @@ trait AsApiController
     {
         $fields = $request->input('fields', '');
 
-        $genericPresenter = app(GenericPresenter::class);
-
         return app(GenerateQuery::class, [
             'model'         => $this->model(),
             'classCallable' => $this,
         ])->execute(
             fields: $fields,
-            pagination: $genericPresenter->extractPagination($request->all())
+            pagination: app(GenericPresenter::class)->extractPagination($request->all())
         );
     }
 
