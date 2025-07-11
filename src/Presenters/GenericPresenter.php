@@ -25,7 +25,7 @@ final class GenericPresenter
     ): array {
         $pagination     = $this->paginateSupport->extractPagination($options);
         $internalFields = $this->parseFields($fields);
-        $includes       = $this->getIncludes($fields);
+        $includes       = $this->getIncludesByFields($fields);
 
         $output = [];
 
@@ -79,9 +79,9 @@ final class GenericPresenter
             });
     }
 
-    public function getIncludesWithQuery(Model $model, string $fields, array $pagination): array
+    public function getIncludes(Model $model, string $fields, array $pagination): array
     {
-        $relationsFromFields = $this->getIncludes($fields);
+        $relationsFromFields = $this->getIncludesByFields($fields);
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
             $segments     = explode('.', $relationPath);
@@ -189,7 +189,7 @@ final class GenericPresenter
         return array_unique($withCount);
     }
 
-    private function getIncludes(string $fields): array
+    private function getIncludesByFields(string $fields): array
     {
         $relationsFromFields = [];
 

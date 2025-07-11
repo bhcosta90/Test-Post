@@ -25,7 +25,7 @@ final class GenerateQuery
 
         $genericPresenter = app(GenericPresenter::class);
 
-        if (filled($allIncludes = $genericPresenter->getIncludesWithQuery($this->model, $fields, $pagination))) {
+        if (filled($allIncludes = $genericPresenter->getIncludes($this->model, $fields, $pagination))) {
             $query->with($allIncludes);
         }
 
