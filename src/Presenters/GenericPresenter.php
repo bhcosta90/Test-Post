@@ -31,7 +31,6 @@ final class GenericPresenter
 
         $selfFields = $internalFields['__self'] ?? [];
 
-        // Automatically adds the fields that start with "can"
         foreach (get_object_vars($model) as $key => $value) {
             if (Str::startsWith($key, 'can_') && !in_array($key, $selfFields, true)) {
                 $selfFields[] = $key;
@@ -138,7 +137,6 @@ final class GenericPresenter
                     }
 
                 } else {
-                    // outras relações apenas adicionam o include simples
                     if (!in_array($currentPath, $includes, true) && !isset($processedPaths[$currentPath])) {
                         $includes[]                   = $currentPath;
                         $processedPaths[$currentPath] = true;
@@ -188,15 +186,17 @@ final class GenericPresenter
         $withCount = [];
 
         foreach ($allIncludes as $key => $value) {
-            // Pode estar na chave (string) ou no valor (string)
             $relationPath = is_int($key) ? $value : $key;
+
+            if (str_contains($relationPath, '.')) {
+                continue;
+            }
 
             $method = Str::camel($relationPath);
 
             if (method_exists($model, $method)) {
                 $relation = $model->$method();
 
-                // Só inclui se for HasMany (ou outro que queira contar)
                 if ($relation instanceof Relations\HasMany
                     || $relation instanceof Relations\HasOne) {
                     $withCount[] = $relationPath;
@@ -204,7 +204,7 @@ final class GenericPresenter
             }
         }
 
-        return $withCount;
+        return array_unique($withCount);
     }
 
     private function getIncludesByFields(string $fields): array
