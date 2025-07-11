@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Comment;
 use Illuminate\Database\Eloquent\Model;
-use QuantumTecnology\ControllerQraphQLExtension\Traits\AsApiController;
+use QuantumTecnology\ControllerBasicsExtension\Traits\AsApiController;
 
 final class CommentController
 {

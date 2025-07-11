@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\Resources;
+namespace QuantumTecnology\ControllerBasicsExtension\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
+use QuantumTecnology\ControllerBasicsExtension\Presenters\GenericPresenter;
 
 final class GenericResource extends JsonResource
 {

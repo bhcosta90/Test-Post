@@ -2,12 +2,12 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\QueryBuilder;
+namespace QuantumTecnology\ControllerBasicsExtension\QueryBuilder;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use QuantumTecnology\ControllerQraphQLExtension\Presenters\GenericPresenter;
+use QuantumTecnology\ControllerBasicsExtension\Presenters\GenericPresenter;
 
 final class GenerateQuery
 {

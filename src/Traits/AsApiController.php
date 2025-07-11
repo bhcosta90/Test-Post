@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\Traits;
+namespace QuantumTecnology\ControllerBasicsExtension\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
-use QuantumTecnology\ControllerQraphQLExtension\QueryBuilder\GenerateQuery;
-use QuantumTecnology\ControllerQraphQLExtension\Resources\GenericResource;
-use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
+use QuantumTecnology\ControllerBasicsExtension\QueryBuilder\GenerateQuery;
+use QuantumTecnology\ControllerBasicsExtension\Resources\GenericResource;
+use QuantumTecnology\ControllerBasicsExtension\Support\PaginateSupport;
 
 trait AsApiController
 {

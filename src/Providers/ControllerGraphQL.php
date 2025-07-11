@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\Providers;
+namespace QuantumTecnology\ControllerBasicsExtension\Providers;
 
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\ServiceProvider;
-use QuantumTecnology\ControllerQraphQLExtension\Middleware\LogMiddleware;
+use QuantumTecnology\ControllerBasicsExtension\Middleware\LogMiddleware;
 
 final class ControllerGraphQL extends ServiceProvider
 {

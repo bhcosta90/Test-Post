@@ -2,14 +2,14 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\Middleware;
+namespace QuantumTecnology\ControllerBasicsExtension\Middleware;
 
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use QuantumTecnology\ControllerQraphQLExtension\Support\LogSupport;
+use QuantumTecnology\ControllerBasicsExtension\Support\LogSupport;
 
 final class LogMiddleware
 {

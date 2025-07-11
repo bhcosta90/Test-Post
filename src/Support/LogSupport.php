@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\Support;
+namespace QuantumTecnology\ControllerBasicsExtension\Support;
 
 final class LogSupport
 {

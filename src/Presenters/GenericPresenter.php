@@ -2,15 +2,15 @@
 
 declare(strict_types = 1);
 
-namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
+namespace QuantumTecnology\ControllerBasicsExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
-use QuantumTecnology\ControllerQraphQLExtension\QueryBuilder\GenerateQuery;
-use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
+use QuantumTecnology\ControllerBasicsExtension\QueryBuilder\GenerateQuery;
+use QuantumTecnology\ControllerBasicsExtension\Support\PaginateSupport;
 
 final class GenericPresenter
 {
