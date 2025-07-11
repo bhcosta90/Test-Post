@@ -177,19 +177,16 @@ trait AsApiController
         foreach ($filters as $relation => $fields) {
             foreach ($fields as $field => $operators) {
                 foreach ($operators as $operator => $values) {
-                    // Remove operadores com valores vazios ou todos falsy
                     if (empty($values) || (is_array($values) && 0 === count(array_filter($values, fn ($v) => null !== $v && '' !== $v && [] !== $v)))) {
                         unset($filters[$relation][$field][$operator]);
                     }
                 }
 
-                // Remove campo se todos os operadores foram removidos
                 if (empty($filters[$relation][$field])) {
                     unset($filters[$relation][$field]);
                 }
             }
 
-            // Remove relação se todos os campos foram removidos
             if (empty($filters[$relation])) {
                 unset($filters[$relation]);
             }
