@@ -30,9 +30,9 @@ final class GenericPresenter
 
         $selfFields = $internalFields['__self'] ?? [];
 
-        // Adiciona automaticamente os campos que começam com "can"
+        // Automatically adds the fields that start with "can"
         foreach (get_object_vars($model) as $key => $value) {
-            if (Str::startsWith($key, 'can_') && !in_array($key, $selfFields)) {
+            if (Str::startsWith($key, 'can_') && !in_array($key, $selfFields, true)) {
                 $selfFields[] = $key;
             }
         }
