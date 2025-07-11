@@ -214,7 +214,7 @@ trait AsApiController
         return $filters;
     }
 
-    protected function saveChildren(Model $model, array $children)
+    protected function saveChildren(Model $model, array $children): void
     {
         foreach ($children as $key => $value) {
             foreach ($value as $value2) {
