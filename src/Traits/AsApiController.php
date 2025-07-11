@@ -71,19 +71,18 @@ trait AsApiController
 
     protected function queryModel(Request $request): Builder
     {
-        $query = $this->model()->query();
+        $fields = $request->input('fields', '');
+        $query  = $this->model()->query();
 
         $genericPresenter = app(GenericPresenter::class);
-
-        $fields     = $request->input('fields', '');
-        $pagination = $genericPresenter->extractPagination($request->all());
+        $pagination       = $genericPresenter->extractPagination($request->all());
 
         if (filled($allIncludes = $genericPresenter->getIncludes($this->model(), $fields, $pagination))) {
-            $query = $query->with($allIncludes);
+            $query->with($allIncludes);
         }
 
         if (filled($allCount = $genericPresenter->getWithCount($this->model(), $allIncludes))) {
-            $query = $query->withCount($allCount);
+            $query->withCount($allCount);
         }
 
         return $query;
