@@ -73,7 +73,6 @@ trait AsApiController
     {
         $fields = $request->input('fields', '');
 
-        dd($this->extractFilter($request->all()));
         $query = app(GenerateQuery::class, [
             'model'         => $this->model(),
             'classCallable' => $this,
@@ -127,7 +126,7 @@ trait AsApiController
 
                 $segments     = explode('_', $rawPath);
                 $field        = array_pop($segments);
-                $relationPath = implode('_', $segments);
+                $relationPath = implode('_', $segments) ?: $this->model()::class;
 
                 if (is_array($value) && null === $operator) {
                     foreach ($value as $op => $val) {

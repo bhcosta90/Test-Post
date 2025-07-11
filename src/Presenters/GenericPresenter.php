@@ -118,7 +118,8 @@ final class GenericPresenter
                         $currentPath
                     );
 
-                    $filterOfInclude = $filters[$currentPath] ?? [];
+                    $currentPathUnderline = str_replace('.', '_', $currentPath);
+                    $filterOfInclude      = $filters[$currentPathUnderline] ?? [];
 
                     if (!isset($processedPaths[$currentPath])) {
                         $includes[$currentPath] = fn ($query) => ($this->getQueryCallable(

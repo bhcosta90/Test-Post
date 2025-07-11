@@ -26,6 +26,8 @@ final class GenerateQuery
 
         $genericPresenter = app(GenericPresenter::class);
 
+        $this->addWhereWithFilters($query, $filters[$this->model::class] ?? []);
+
         if (filled($allIncludes = $genericPresenter->getIncludes(
             $this->model,
             $fields,
@@ -44,8 +46,15 @@ final class GenerateQuery
         return $query;
     }
 
-    public function addWhereWithFilters($query, array $filters)
+    public function addWhereWithFilters($query, array $filters = []): void
     {
-        dd($filters);
+        foreach ($filters as $field => $values) {
+            foreach ($values as $operator => $data) {
+                match ($operator) {
+                    'in'    => $query->whereIn($field, $data),
+                    default => $query->where($field, $operator, $data)
+                };
+            }
+        }
     }
 }
