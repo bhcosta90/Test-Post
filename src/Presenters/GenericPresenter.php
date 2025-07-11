@@ -191,11 +191,6 @@ final class GenericPresenter
             // Pode estar na chave (string) ou no valor (string)
             $relationPath = is_int($key) ? $value : $key;
 
-            // Ignora relações aninhadas (com ponto)
-            if (str_contains($relationPath, '.')) {
-                continue;
-            }
-
             $method = Str::camel($relationPath);
 
             if (method_exists($model, $method)) {
@@ -209,7 +204,7 @@ final class GenericPresenter
             }
         }
 
-        return array_unique($withCount);
+        return $withCount;
     }
 
     private function getIncludesByFields(string $fields): array
