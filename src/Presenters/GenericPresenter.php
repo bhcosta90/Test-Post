@@ -136,7 +136,15 @@ final class GenericPresenter
                         ->all();
 
                     if ($childFields) {
-                        $includes[$currentPath] = fn ($query) => $query->withCount($childFields);
+                        $queryChildFields = [];
+
+                        foreach ($childFields as $child) {
+                            $currentPathChild         = $currentPath . '.' . $child;
+                            $queryChildFields[$child] = fn ($query) => $this->getQueryCallable($query, $classCallable, $currentPathChild) ?: $query;
+                        }
+
+                        $includes[$currentPath] = fn ($query) => $query->withCount($queryChildFields);
+
                     } else {
                         $includes[] = $currentPath;
                     }
