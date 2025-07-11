@@ -13,15 +13,16 @@ final class PaginateSupport
         }
 
         if ($perPage > config('quantum-controller-graphql.max_page')) {
-            $perPage = config('quantum-controller-graphql.max_page');
             LogSupport::add(
                 sprintf(
                     'Per page value %s exceeds maximum allowed %s, setting to maximum on the %s.',
                     $perPage,
                     config('quantum-controller-graphql.max_page'),
-                    $path
+                    'per_page_' . str_replace('.', '_', $path)
                 )
             );
+
+            $perPage = config('quantum-controller-graphql.max_page');
         }
 
         return (int) ($perPage ?: 1);
