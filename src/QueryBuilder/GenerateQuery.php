@@ -12,7 +12,7 @@ final class GenerateQuery
 {
     public function __construct(
         protected Model $model,
-        protected ?object $classCallable = null,
+        protected object $classCallable,
     ) {
     }
 
@@ -28,6 +28,7 @@ final class GenerateQuery
             $this->model,
             $fields,
             $pagination,
+            $this->classCallable
         ))) {
             $query->with($allIncludes);
         }
