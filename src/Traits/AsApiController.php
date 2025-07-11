@@ -19,7 +19,7 @@ trait AsApiController
 
     final public function index(Request $request, PaginateSupport $paginateSupport): AnonymousResourceCollection
     {
-        $query = $this->queryModel($request);
+        $query = $this->queryModel($request, __FUNCTION__);
 
         $page    = $request->input('page', 1);
         $perPage = $paginateSupport->calculatePerPage($request->input('per_page'), 'father');
@@ -66,16 +66,17 @@ trait AsApiController
 
         $id = $this->model()->getKeyName();
 
-        return $this->queryModel($request)->where($id, end($routeParams))->sole();
+        return $this->queryModel($request, __FUNCTION__)->where($id, end($routeParams))->sole();
     }
 
-    protected function queryModel(Request $request): Builder
+    protected function queryModel(Request $request, string $action): Builder
     {
         $fields = $request->input('fields', '');
 
         return app(GenerateQuery::class, [
             'model'         => $this->model(),
             'classCallable' => $this,
+            'action'        => $action,
         ])->execute(
             fields: $fields,
             pagination: app(PaginateSupport::class)->extractPagination($request->all()),

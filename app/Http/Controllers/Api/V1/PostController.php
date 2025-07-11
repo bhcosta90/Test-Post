@@ -17,6 +17,11 @@ final class PostController
         return $query->idLessThat(3);
     }
 
+    public function queryIndexCommentsPostComments($query)
+    {
+        return $query->idLessThat(6);
+    }
+
     protected function model(): Model
     {
         return new Post();

@@ -83,7 +83,8 @@ final class GenericPresenter
         Model $model,
         string $fields,
         array $pagination,
-        object $classCallable
+        ?object $classCallable = null,
+        ?string $action = null,
     ): array {
         $includes            = [];
         $processedPaths      = [];
@@ -115,7 +116,7 @@ final class GenericPresenter
                         ->calculatePerPage((string) ($pagination[$currentPath]['per_page'] ?? ''), $currentPath);
 
                     if (!isset($processedPaths[$currentPath])) {
-                        $includes[$currentPath]       = fn ($query) => ($this->getQueryCallable($query, $classCallable, $currentPath) ?: $query)->limit($limit);
+                        $includes[$currentPath]       = fn ($query) => ($this->getQueryCallable($query, $classCallable, $action, $currentPath) ?: $query)->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
 
@@ -140,7 +141,7 @@ final class GenericPresenter
 
                         foreach ($childFields as $child) {
                             $currentPathChild         = $currentPath . '.' . $child;
-                            $queryChildFields[$child] = fn ($query) => $this->getQueryCallable($query, $classCallable, $currentPathChild) ?: $query;
+                            $queryChildFields[$child] = fn ($query) => $this->getQueryCallable($query, $classCallable, $action, $currentPathChild) ?: $query;
                         }
 
                         $includes[$currentPath] = fn ($query) => $query->withCount($queryChildFields);
@@ -341,12 +342,22 @@ final class GenericPresenter
         return $fields;
     }
 
-    private function getQueryCallable($query, object $classCallable, string $relationPath)
+    private function getQueryCallable($query, ?object $classCallable, ?string $action, string $relationPath)
     {
-        $method = 'query' . Str::studly(str_replace('.', '_', $relationPath));
+        if ($classCallable) {
+            if ($action) {
+                $method = 'query' . Str::studly(str_replace('.', '_', $action . ' ' . $relationPath));
 
-        if (method_exists($classCallable, $method)) {
-            return $classCallable->{$method}($query);
+                if (method_exists($classCallable, $method)) {
+                    return $classCallable->{$method}($query);
+                }
+            }
+
+            $method = 'query' . Str::studly(str_replace('.', '_', $relationPath));
+
+            if (method_exists($classCallable, $method)) {
+                return $classCallable->{$method}($query);
+            }
         }
 
         return null;
