@@ -6,6 +6,7 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
@@ -98,7 +99,6 @@ final class GenericPresenter
     public function getIncludes(Model $model, string $fields): array
     {
         $relationsFromFields = [];
-        $includes            = [];
 
         $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
 
@@ -121,8 +121,6 @@ final class GenericPresenter
             }
         }
 
-        $includes       = [];
-        $withCount      = [];
         $processedPaths = [];
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
@@ -197,7 +195,7 @@ final class GenericPresenter
 
                 $relation = $currentModel->$method();
 
-                // Se não for HasMany, invalida (pode mudar aqui se quiser suportar outros tipos)
+                // If not has many, invalidated (you can change here if you want to support other types)
                 if (!($relation instanceof Relations\HasMany)) {
                     $validPath = false;
 
@@ -215,14 +213,14 @@ final class GenericPresenter
         return array_unique($withCount);
     }
 
-    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar)
+    private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar): void
     {
         $relation = array_shift($segments);
         $camelRel = Str::camel($relation);
         $fullPath = implode('.', [...$pathSoFar, $relation]);
 
         if (!method_exists($model, $camelRel)) {
-            return null;
+            return;
         }
 
         $relationObject = $model->$camelRel();
@@ -231,7 +229,7 @@ final class GenericPresenter
             $related = $model->$camelRel;
 
             if (!$related) {
-                return null;
+                return;
             }
 
             $countAttribute = $relation . '_count';
@@ -254,7 +252,7 @@ final class GenericPresenter
             $related = $model->$camelRel;
 
             if (!$related) {
-                return null;
+                return;
             }
 
             $output[$relation] = $this->transform($related, [
@@ -276,7 +274,6 @@ final class GenericPresenter
             }
         }
 
-        return null;
     }
 
     private function parseFields(string $raw): array
