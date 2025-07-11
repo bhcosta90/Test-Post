@@ -25,7 +25,7 @@ final class GenericPresenter
     ): array {
         $pagination     = $this->paginateSupport->extractPagination($options);
         $internalFields = $this->parseFields($fields);
-        $includes       = $this->getIncludes($model, $fields, $pagination);
+        $includes       = $this->getIncludes($fields);
 
         $output = [];
 
@@ -79,7 +79,35 @@ final class GenericPresenter
             });
     }
 
-    public function getIncludes(Model $model, string $fields, array $pagination): array
+    public function getIncludes(string $fields): array
+    {
+        $relationsFromFields = [];
+
+        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
+
+        foreach ($fieldsArray as $field) {
+            if (str_contains($field, 'actions.')) {
+                continue;
+            }
+
+            if (Str::contains($field, '.')) {
+                $parts = explode('.', $field);
+                $path  = '';
+
+                foreach ($parts as $index => $part) {
+                    $path = '' === $path ? $part : $path . '.' . $part;
+
+                    if ($index < count($parts) - 1) {
+                        $relationsFromFields[] = $path;
+                    }
+                }
+            }
+        }
+
+        return $relationsFromFields;
+    }
+
+    public function getIncludesWithQuery(Model $model, string $fields, array $pagination): array
     {
         $relationsFromFields = [];
 
