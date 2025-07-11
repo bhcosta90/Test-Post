@@ -6,9 +6,11 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use QuantumTecnology\ControllerQraphQLExtension\QueryBuilder\GenerateQuery;
 use QuantumTecnology\ControllerQraphQLExtension\Resources\GenericResource;
 use QuantumTecnology\ControllerQraphQLExtension\Support\PaginateSupport;
@@ -35,7 +37,24 @@ trait AsApiController
 
         abort_unless($request->authorize(), 403, 'This action is unauthorized.');
 
-        return new GenericResource($this->model()->create($request->validated()));
+        return DB::transaction(function () use ($request) {
+            $data       = $request->validated();
+            $modelClass = $this->model();
+
+            $hasMany = [];
+
+            foreach ($data as $key => $value) {
+                if (is_array($value) && $modelClass->{$key}() instanceof HasMany) {
+                    $hasMany[$key] = $value;
+                    unset($data[$key]);
+                }
+            }
+
+            $model = $modelClass->create($data);
+            $this->saveChildren($model, $hasMany);
+
+            return new GenericResource($model);
+        });
     }
 
     final public function show(Request $request): GenericResource
@@ -193,5 +212,29 @@ trait AsApiController
         }
 
         return $filters;
+    }
+
+    protected function saveChildren(Model $model, array $children)
+    {
+        foreach ($children as $key => $value) {
+            foreach ($value as $value2) {
+                $hasMany = [];
+
+                foreach ($value2 as $key3 => $value3) {
+                    if (is_array($value3)) {
+                        $hasMany[$key3] = $value3;
+                        unset($value2[$key3]);
+                    }
+                }
+
+                if ($model->{$key}() instanceof HasMany) {
+                    $newModel = $model->{$key}()->create($value2);
+
+                    if (filled($hasMany)) {
+                        $this->saveChildren($newModel, $hasMany);
+                    }
+                }
+            }
+        }
     }
 }

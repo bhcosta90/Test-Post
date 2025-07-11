@@ -25,6 +25,16 @@ final class PostRequest extends FormRequest
                 Rule::requiredIf((bool) $this->route('post')),
                 Rule::enum(PostStatusEnum::class),
             ],
+            'comments.*.body' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+            'comments.*.commentsData.*.name' => [
+                'nullable',
+                'string',
+                'max:30',
+            ],
         ];
     }
 
