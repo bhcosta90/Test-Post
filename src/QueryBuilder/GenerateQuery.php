@@ -19,6 +19,7 @@ final class GenerateQuery
     public function execute(
         string $fields = '',
         array $pagination = [],
+        string $action = '',
     ): Builder {
         $query = $this->model->query();
 
