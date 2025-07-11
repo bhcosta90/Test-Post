@@ -337,8 +337,6 @@ final class GenericPresenter
             }
         }
 
-        dd($result);
-
         return $result;
     }
 
