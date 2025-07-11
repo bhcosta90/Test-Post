@@ -12,7 +12,7 @@ final class GenerateQuery
 {
     public function __construct(
         protected Model $model,
-        protected object $classCallable,
+        protected ?object $classCallable = null,
         protected ?string $action = null,
     ) {
     }
