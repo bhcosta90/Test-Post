@@ -120,7 +120,7 @@ trait AsApiController
         $filters = [];
 
         foreach ($input as $key => $value) {
-            if (preg_match('/^scope_(.+?)(?:\[(.+)\])?$/', $key, $matches)) {
+            if (preg_match('/^filter_(.+?)(?:\[(.+)\])?$/', $key, $matches)) {
                 $rawPath  = $matches[1];
                 $operator = $matches[2] ?? null;
 
