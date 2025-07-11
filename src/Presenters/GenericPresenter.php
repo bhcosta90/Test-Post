@@ -82,7 +82,8 @@ final class GenericPresenter
     public function getIncludes(
         Model $model,
         string $fields,
-        array $pagination
+        array $pagination,
+        array $queryIncludes = []
     ): array {
         $includes            = [];
         $processedPaths      = [];
@@ -114,7 +115,7 @@ final class GenericPresenter
                         ->calculatePerPage((string) ($pagination[$currentPath]['per_page'] ?? ''), $currentPath);
 
                     if (!isset($processedPaths[$currentPath])) {
-                        $includes[$currentPath]       = fn ($query) => $query->limit($limit);
+                        $includes[$currentPath]       = fn ($query) => ($queryIncludes[$currentPath] ?? $query)->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
 

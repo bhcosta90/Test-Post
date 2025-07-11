@@ -79,7 +79,6 @@ trait AsApiController
         ])->execute(
             fields: $fields,
             pagination: app(PaginateSupport::class)->extractPagination($request->all()),
-            action: $action
         );
     }
 
