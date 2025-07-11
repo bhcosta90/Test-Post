@@ -35,6 +35,11 @@ final class PostRequest extends FormRequest
                 'string',
                 'max:30',
             ],
+            'comments.*.commentsData.*.commentsData2.*.name' => [
+                'nullable',
+                'string',
+                'max:30',
+            ],
         ];
     }
 
