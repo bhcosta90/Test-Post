@@ -361,8 +361,6 @@ final class GenericPresenter
 
                 if (method_exists($classCallable, $method)) {
                     $classCallable->{$method}($query);
-
-                    return;
                 }
             }
 
@@ -372,5 +370,7 @@ final class GenericPresenter
                 $classCallable->{$method}($query);
             }
         }
+
+        return null;
     }
 }
