@@ -154,9 +154,9 @@ final class GenericPresenter
         $withCount = [];
 
         foreach ($allIncludes as $key => $value) {
-            if ($value instanceof Closure) {
-                continue;
-            }
+            //            if ($value instanceof Closure) {
+            //                continue;
+            //            }
 
             // Pode estar na chave (string) ou valor (string)
             $relationPath = is_int($key) ? $value : $key;
