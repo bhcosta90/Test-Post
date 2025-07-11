@@ -79,61 +79,9 @@ final class GenericPresenter
             });
     }
 
-    public function getIncludes(string $fields): array
-    {
-        $relationsFromFields = [];
-
-        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
-
-        foreach ($fieldsArray as $field) {
-            if (str_contains($field, 'actions.')) {
-                continue;
-            }
-
-            if (Str::contains($field, '.')) {
-                $parts = explode('.', $field);
-                $path  = '';
-
-                foreach ($parts as $index => $part) {
-                    $path = '' === $path ? $part : $path . '.' . $part;
-
-                    if ($index < count($parts) - 1) {
-                        $relationsFromFields[] = $path;
-                    }
-                }
-            }
-        }
-
-        return $relationsFromFields;
-    }
-
     public function getIncludesWithQuery(Model $model, string $fields, array $pagination): array
     {
-        $relationsFromFields = [];
-
-        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
-
-        foreach ($fieldsArray as $field) {
-            if (str_contains($field, 'actions.')) {
-                continue;
-            }
-
-            if (Str::contains($field, '.')) {
-                $parts = explode('.', $field);
-                $path  = '';
-
-                foreach ($parts as $index => $part) {
-                    $path = '' === $path ? $part : $path . '.' . $part;
-
-                    if ($index < count($parts) - 1) {
-                        $relationsFromFields[] = $path;
-                    }
-                }
-            }
-        }
-
-        $includes       = [];
-        $processedPaths = [];
+        $relationsFromFields = $this->getIncludes($fields);
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
             $segments     = explode('.', $relationPath);
@@ -239,6 +187,34 @@ final class GenericPresenter
         }
 
         return array_unique($withCount);
+    }
+
+    private function getIncludes(string $fields): array
+    {
+        $relationsFromFields = [];
+
+        $fieldsArray = array_filter(array_map('trim', explode(',', $fields)));
+
+        foreach ($fieldsArray as $field) {
+            if (str_contains($field, 'actions.')) {
+                continue;
+            }
+
+            if (Str::contains($field, '.')) {
+                $parts = explode('.', $field);
+                $path  = '';
+
+                foreach ($parts as $index => $part) {
+                    $path = '' === $path ? $part : $path . '.' . $part;
+
+                    if ($index < count($parts) - 1) {
+                        $relationsFromFields[] = $path;
+                    }
+                }
+            }
+        }
+
+        return $relationsFromFields;
     }
 
     private function handleIncludePath($model, &$output, $fields, $pagination, $segments, $pathSoFar): void
