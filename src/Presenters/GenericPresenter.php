@@ -6,7 +6,6 @@ namespace QuantumTecnology\ControllerQraphQLExtension\Presenters;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
-use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Str;
@@ -18,19 +17,22 @@ final class GenericPresenter
     {
     }
 
-    public function transform(Model $model, array $options = []): array
-    {
-        $fields     = $this->parseFields($options['fields'] ?? '');
-        $includes   = $this->getIncludes($model, $options['fields'] ?? '');
-        $pagination = $this->extractPagination($options);
+    public function transform(
+        Model $model,
+        array $options = [],
+        string $fields = ''
+    ): array {
+        $internalFields = $this->parseFields($fields);
+        $pagination     = $this->extractPagination($options);
+        $includes       = $this->getIncludes($model, $fields, $pagination);
 
         $output = [];
 
-        $selfFields = $fields['__self'] ?? array_keys($model->getAttributes());
+        $selfFields = $internalFields['__self'] ?? [];
 
-        // Adiciona automaticamente os campos que começam com "can"
+        // Automatically adds the fields that start with "can"
         foreach (get_object_vars($model) as $key => $value) {
-            if (Str::startsWith($key, 'can_') && !in_array($key, $selfFields)) {
+            if (Str::startsWith($key, 'can_') && !in_array($key, $selfFields, true)) {
                 $selfFields[] = $key;
             }
         }
@@ -57,7 +59,7 @@ final class GenericPresenter
 
         foreach ($includes as $key => $includeValue) {
             $segments = explode('.', is_int($key) ? $includeValue : $key);
-            $this->handleIncludePath($model, $output, $fields, $pagination, $segments, []);
+            $this->handleIncludePath($model, $output, $internalFields, $pagination, $segments, []);
         }
 
         return collect($output)
@@ -81,22 +83,23 @@ final class GenericPresenter
         $pagination = [];
 
         foreach ($input as $key => $value) {
-            if (preg_match('/^(page|perPage)([A-Z]\w*)$/', $key, $matches)) {
-                $type     = lcfirst($matches[1]);
-                $relation = lcfirst($matches[2]);
+            if (preg_match('/^(per_page|page)_(.+)$/', $key, $matches)) {
+                [$type, $rawPath] = [$matches[1], $matches[2]];
 
-                if (!isset($pagination[$relation])) {
-                    $pagination[$relation] = [];
+                $relationPath = str_replace('_', '.', $rawPath);
+
+                if (!isset($pagination[$relationPath])) {
+                    $pagination[$relationPath] = [];
                 }
 
-                $pagination[$relation][$type] = (int) $value;
+                $pagination[$relationPath][$type] = (int) $value;
             }
         }
 
         return $pagination;
     }
 
-    public function getIncludes(Model $model, string $fields): array
+    public function getIncludes(Model $model, string $fields, array $pagination): array
     {
         $relationsFromFields = [];
 
@@ -121,6 +124,7 @@ final class GenericPresenter
             }
         }
 
+        $includes       = [];
         $processedPaths = [];
 
         foreach (array_unique($relationsFromFields) as $relationPath) {
@@ -145,18 +149,34 @@ final class GenericPresenter
 
                 if ($relation instanceof Relations\HasMany) {
                     // include com limit
+                    $limit = $this->paginateSupport
+                        ->calculatePerPage((string) ($pagination[$currentPath]['per_page'] ?? ''), $currentPath);
+
                     if (!isset($processedPaths[$currentPath])) {
-                        $includes[$currentPath]       = fn ($query) => $query->limit(5);
+                        $includes[$currentPath]       = fn ($query) => $query->limit($limit);
                         $processedPaths[$currentPath] = true;
                     }
 
-                    // registra o withCount para essa relação
-                    $withCount[] = $currentPath;
                 } else {
                     // outras relações apenas adicionam o include simples
                     if (!in_array($currentPath, $includes, true) && !isset($processedPaths[$currentPath])) {
                         $includes[]                   = $currentPath;
                         $processedPaths[$currentPath] = true;
+                    }
+                }
+
+                if ($relation instanceof Relations\BelongsTo) {
+                    $childFields = collect($relationsFromFields)
+                        ->filter(fn ($p) => Str::startsWith($p, $currentPath . '.') && mb_substr_count($p, '.') > mb_substr_count($currentPath, '.'))
+                        ->map(fn ($p) => Str::after($p, $currentPath . '.'))
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    if ($childFields) {
+                        $includes[$currentPath] = fn ($query) => $query->withCount($childFields);
+                    } else {
+                        $includes[] = $currentPath;
                     }
                 }
 
@@ -195,7 +215,7 @@ final class GenericPresenter
 
                 $relation = $currentModel->$method();
 
-                // If not has many, invalidated (you can change here if you want to support other types)
+                // Se não for HasMany, invalida (pode mudar aqui se quiser suportar outros tipos)
                 if (!($relation instanceof Relations\HasMany)) {
                     $validPath = false;
 
@@ -237,10 +257,9 @@ final class GenericPresenter
             $output[$relation] = [
                 'data' => $related->map(function ($item) use ($fields, $fullPath, $pagination) {
                     return $this->transform($item, [
-                        'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
                         'include'    => '',
                         'pagination' => $pagination,
-                    ]);
+                    ], fields: $this->transformArrayToString($fields[$fullPath] ?? []));
                 }),
                 'meta' => [
                     'total' => $model->{$countAttribute} ?? null,
@@ -256,10 +275,9 @@ final class GenericPresenter
             }
 
             $output[$relation] = $this->transform($related, [
-                'fields'     => $this->transformArrayToString($fields[$fullPath] ?? []),
                 'include'    => '',
                 'pagination' => $pagination,
-            ]);
+            ], fields: $this->transformArrayToString($fields[$fullPath] ?? []));
         }
 
         if (!empty($segments)) {
