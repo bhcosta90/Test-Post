@@ -158,7 +158,7 @@ trait AsApiController
                     }
 
                     $parsedValues = array_map(function ($v) {
-                        $v = mb_trim($v);
+                        $v = mb_trim($v ?: '');
 
                         return is_numeric($v) ? (int) $v : $v;
                     }, $parsedValues);
@@ -168,7 +168,33 @@ trait AsApiController
             }
         }
 
-        return $filters;
+        return $this->cleanFilters($filters);
 
+    }
+
+    protected function cleanFilters(array $filters): array
+    {
+        foreach ($filters as $relation => $fields) {
+            foreach ($fields as $field => $operators) {
+                foreach ($operators as $operator => $values) {
+                    // Remove operadores com valores vazios ou todos falsy
+                    if (empty($values) || (is_array($values) && 0 === count(array_filter($values, fn ($v) => null !== $v && '' !== $v && [] !== $v)))) {
+                        unset($filters[$relation][$field][$operator]);
+                    }
+                }
+
+                // Remove campo se todos os operadores foram removidos
+                if (empty($filters[$relation][$field])) {
+                    unset($filters[$relation][$field]);
+                }
+            }
+
+            // Remove relação se todos os campos foram removidos
+            if (empty($filters[$relation])) {
+                unset($filters[$relation]);
+            }
+        }
+
+        return $filters;
     }
 }
