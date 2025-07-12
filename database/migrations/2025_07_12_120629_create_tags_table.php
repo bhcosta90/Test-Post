@@ -23,7 +23,7 @@ return new class() extends Migration {
 
         Schema::create('comment_tag', function (Blueprint $table) {
             $table->foreignId('comment_id')->constrained('comments');
-            $table->foreignId('post_id')->constrained('posts');
+            $table->foreignId('tag_id')->constrained('tags');
         });
     }
 

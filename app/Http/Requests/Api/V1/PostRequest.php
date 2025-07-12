@@ -30,6 +30,11 @@ final class PostRequest extends FormRequest
                 'string',
                 'max:1000',
             ],
+            'comments.*.tags.*.name' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
             'comments.*.body' => [
                 'required',
                 'string',
