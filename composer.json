@@ -14,7 +14,8 @@
         "laravel/sanctum": "^4.0",
         "laravel/telescope": "^5.10",
         "laravel/tinker": "^2.10.1",
-        "nunomaduro/essentials": "0.1"
+        "nunomaduro/essentials": "0.1",
+        "quantumtecnology/controller-basics-extension": "dev-feature/ApiQl"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -31,7 +32,6 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "QuantumTecnology\\ControllerBasicsExtension\\": "src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
