@@ -6,11 +6,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Comment;
 use Illuminate\Database\Eloquent\Model;
-use QuantumTecnology\ControllerBasicsExtension\Traits\AsApiController;
+use QuantumTecnology\ControllerBasicsExtension\Traits\AsGraphQLController;
 
 final class CommentController
 {
-    use AsApiController;
+    use AsGraphQLController;
 
     protected function model(): Model
     {

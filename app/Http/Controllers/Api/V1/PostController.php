@@ -6,11 +6,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Post;
 use Illuminate\Database\Eloquent\Model;
-use QuantumTecnology\ControllerBasicsExtension\Traits\AsApiController;
+use QuantumTecnology\ControllerBasicsExtension\Traits\AsGraphQLController;
 
 final class PostController
 {
-    use AsApiController;
+    use AsGraphQLController;
 
     //    public function queryCommentsPostComments($query)
     //    {
