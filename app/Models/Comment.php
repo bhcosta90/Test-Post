@@ -14,7 +14,7 @@ final class Comment extends BaseModel
         return $this->belongsTo(Post::class);
     }
 
-    public function likes(): HasMany
+    public function commentLikes(): HasMany
     {
         return $this->hasMany(CommentLike::class);
     }
