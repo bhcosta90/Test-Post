@@ -4,20 +4,20 @@ declare(strict_types = 1);
 
 namespace Database\Factories;
 
-use App\Models\Comment;
 use App\Models\Post;
+use App\Models\PostLike;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
-final class CommentFactory extends Factory
+final class PostLikeFactory extends Factory
 {
-    protected $model = Comment::class;
+    protected $model = PostLike::class;
 
     public function definition(): array
     {
         return [
             'post_id'    => Post::factory(),
-            'body'       => $this->faker->sentence(20),
+            'like'       => $this->faker->numberBetween(0, 5),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ];

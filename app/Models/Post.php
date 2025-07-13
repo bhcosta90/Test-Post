@@ -4,46 +4,29 @@ declare(strict_types = 1);
 
 namespace App\Models;
 
-use App\Models\Enum\PostStatusEnum;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-final class Post extends Model
+final class Post extends BaseModel
 {
-    use HasFactory;
-    use SoftDeletes;
-
-    protected $casts = [
-        'status' => PostStatusEnum::class,
-    ];
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(Author::class);
+    }
 
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
-    public function user(): BelongsTo
+    public function likes(): HasMany
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(PostLike::class);
     }
 
-    public function getCanDeleteAttribute(): bool
+    public function medias(): MorphMany
     {
-        return true;
-    }
-
-    public function canUpdate(): Attribute
-    {
-        return Attribute::get(fn (): false => false);
-    }
-
-    public function tags(): BelongsToMany
-    {
-        return $this->belongsToMany(Tag::class);
+        return $this->morphMany(Media::class, 'media_able');
     }
 }
