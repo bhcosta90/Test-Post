@@ -28,9 +28,9 @@ final class PostSeeder extends Seeder
                 $post->medias()->create([
                     'name' => fake()->sentence(3),
                 ]);
-                PostLike::factory(random_int(3, 10))->for($post)->create();
-                Comment::factory(random_int(3, 10))->for($post)->create()->each(function (Comment $comment) {
-                    CommentLike::factory(random_int(3, 10))->for($comment)->create();
+                PostLike::factory(random_int(20, 30))->for($post)->create();
+                Comment::factory(random_int(20, 30))->for($post)->create()->each(function (Comment $comment) {
+                    CommentLike::factory(random_int(20, 30))->for($comment)->create();
                 });
             });
     }
