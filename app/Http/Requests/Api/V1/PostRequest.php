@@ -19,6 +19,11 @@ final class PostRequest extends FormRequest
                 Rule::requiredIf((bool) $this->route('post')),
                 'exists:' . User::class . ',id',
             ],
+            'tags.*.name' => [
+                'required',
+                'string',
+                'max:50',
+            ],
             'comments.*.body' => [
                 'required',
                 'string',
